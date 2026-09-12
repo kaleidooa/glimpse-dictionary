@@ -1,0 +1,8 @@
+public/dictionary/**
+src/lib/word-forms.json
+dist*/**
+.qa/**
+node_modules/**
+release/**
+extension/licenses/**
+reports/**

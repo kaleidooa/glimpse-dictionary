@@ -1,0 +1,458 @@
+.product {
+  max-width: 1240px;
+  margin: auto;
+  padding: 0 54px;
+  color: #263d32;
+  font-family: system-ui, "Malgun Gothic", sans-serif;
+}
+.product-nav {
+  height: 96px;
+  border-bottom: 1px solid #dedfd3;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.product-brand {
+  font:
+    700 34px Georgia,
+    serif;
+  text-decoration: none;
+  color: #263d32;
+  letter-spacing: -1.5px;
+}
+.product-brand span {
+  color: #78955c;
+}
+.product-nav > span {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  color: #85907d;
+  border-left: 1px solid #d7ddce;
+  padding-left: 24px;
+}
+.product-nav > button {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+}
+.product button {
+  font-family: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+.product-nav button,
+.lab-return button {
+  background: transparent;
+  border: 0;
+}
+.product-nav b,
+.lab-preview > div > span {
+  font-size: 9px;
+  letter-spacing: 1px;
+  border: 1px solid #d1dbc6;
+  border-radius: 4px;
+  padding: 3px 5px;
+  font-weight: 500;
+}
+.product-main {
+  padding-top: 66px;
+}
+.product-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 52px;
+  gap: 30px;
+}
+.product-intro h1 {
+  font-size: 46px;
+  line-height: 1.35;
+  letter-spacing: -2px;
+  font-weight: 450;
+  margin: 18px 0;
+}
+.product-intro em {
+  font-style: normal;
+  color: #77875e;
+}
+.product-intro p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #71806f;
+}
+.shortcut-card {
+  border: 1px solid #dce1d2;
+  border-radius: 20px;
+  width: 270px;
+  padding: 29px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: #f0f2e8;
+}
+.shortcut-card > span {
+  font-size: 12px;
+  color: #63795f;
+}
+.shortcut-card > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.shortcut-card kbd {
+  background: #fffef8;
+  box-shadow: 0 3px 0 #d8ddcb;
+  border: 1px solid #d8ddcb;
+  border-radius: 7px;
+  padding: 8px 11px;
+  font: 12px system-ui;
+}
+.shortcut-card i {
+  font-size: 12px;
+  color: #8b977f;
+  font-style: normal;
+}
+.shortcut-card small {
+  font-size: 10px;
+  color: #929b85;
+  margin-top: 6px;
+}
+.product-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 32px;
+  align-items: start;
+}
+.product-reader {
+  border: 1px solid #e1e2d6;
+  border-radius: 18px;
+  padding: 34px 42px 0;
+  background: #fffef9;
+}
+.reader-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  color: #8b987f;
+}
+.reader-kicker span:last-child {
+  margin-left: auto;
+  letter-spacing: 0;
+}
+.product-reader h2 {
+  font:
+    400 35px/1.18 Georgia,
+    serif;
+  letter-spacing: -1px;
+  margin: 28px 0 12px;
+  max-width: 360px;
+}
+.reader-deck {
+  font:
+    italic 14px Georgia,
+    serif;
+  color: #939a8b;
+  margin-bottom: 33px;
+}
+.reading-paragraph {
+  font:
+    19px/1.9 Georgia,
+    "Times New Roman",
+    serif;
+  color: #435045;
+  margin: 0 0 24px;
+  white-space: pre-line;
+}
+.reader-bottom {
+  border-top: 1px solid #e7e8dc;
+  margin: 32px -42px 0;
+  padding: 20px 28px;
+  color: #87917b;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.reader-bottom strong {
+  font-weight: 500;
+  color: #647857;
+}
+.reader-bottom svg {
+  margin-left: auto;
+}
+.product-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.product-panel {
+  border: 1px solid #dedfd2;
+  border-radius: 15px;
+  padding: 23px;
+  background: #f9faf2;
+}
+.panel-icon {
+  color: #738760;
+  margin-bottom: 18px;
+}
+.product-panel h3 {
+  font-size: 16px;
+  letter-spacing: -0.4px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+.product-panel p,
+.lab-preview p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #7c8575;
+  margin: 0 0 15px;
+}
+.product-panel small,
+.lab-preview small {
+  display: block;
+  font-size: 10px;
+  line-height: 1.85;
+  color: #8b9383;
+}
+.quiet-rule {
+  height: 1px;
+  background: #e0e4d7;
+  margin: 20px 0;
+}
+.online-switch {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  margin: 0 0 10px;
+  cursor: pointer;
+}
+.online-switch input {
+  accent-color: #496947;
+}
+.install-panel {
+  background: transparent;
+}
+.install-panel .eyebrow {
+  font-size: 8px;
+  display: block;
+  margin-bottom: 15px;
+}
+.install-panel ol {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #67775d;
+  margin: 0 0 15px;
+  padding-left: 17px;
+}
+.install-panel code {
+  font:
+    10px ui-monospace,
+    monospace;
+  overflow-wrap: anywhere;
+}
+.lab-preview {
+  padding: 13px 12px;
+}
+.lab-preview > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #859178;
+  margin-bottom: 13px;
+}
+.lab-preview b {
+  font-size: 12px;
+  font-weight: 500;
+}
+.lab-preview p {
+  font-size: 11px;
+}
+.lab-preview button {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  border: 0;
+  background: transparent;
+  padding: 16px 0 0;
+  font-size: 11px;
+}
+.product-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e0e1d4;
+  padding: 24px 0;
+  margin-top: 50px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #89937f;
+}
+.product-footer > span:first-child {
+  font:
+    bold 17px Georgia,
+    serif;
+  letter-spacing: -0.5px;
+}
+.product-footer i {
+  font:
+    italic 11px Georgia,
+    serif;
+  margin-left: 12px;
+  color: #98a08c;
+}
+.lab-return {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 5%;
+  background: #e9efdf;
+  color: #516447;
+  font-size: 11px;
+}
+.lab-return button {
+  color: #405c35;
+  font-size: 12px;
+  cursor: pointer;
+}
+.loading-lab {
+  padding: 50px;
+}
+.product button:focus-visible {
+  outline: 2px solid #527442;
+  outline-offset: 5px;
+}
+@media (max-width: 850px) {
+  .product {
+    padding: 0 24px;
+  }
+  .product-columns {
+    grid-template-columns: 1fr;
+  }
+  .product-aside {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .lab-preview {
+    grid-column: 1/-1;
+  }
+  .product-intro h1 {
+    font-size: 38px;
+  }
+  .shortcut-card {
+    width: 235px;
+  }
+}
+@media (max-width: 560px) {
+  .product-nav > span {
+    display: none;
+  }
+  .product-main {
+    padding-top: 34px;
+  }
+  .product-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .shortcut-card {
+    width: 100%;
+    padding: 20px;
+  }
+  .product-reader {
+    padding: 28px 24px 0;
+  }
+  .reader-bottom {
+    margin-left: -24px;
+    margin-right: -24px;
+    padding: 18px;
+  }
+  .product-aside {
+    display: flex;
+  }
+  .product-intro h1 {
+    font-size: 36px;
+  }
+  .reading-paragraph {
+    font-size: 18px;
+  }
+  .lab-return > span {
+    display: none;
+  }
+}
+.dictionary-check form {
+  display: flex;
+  gap: 7px;
+  margin-top: 16px;
+}
+.dictionary-check input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid #d8dfd0;
+  border-radius: 7px;
+  background: #fffdf7;
+  color: #263d32;
+  padding: 10px;
+  font: 14px system-ui;
+}
+.dictionary-check form button {
+  border: 0;
+  border-radius: 7px;
+  background: #2d5940;
+  color: white;
+  padding: 0 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dictionary-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+}
+.dictionary-answer:empty {
+  display: none;
+}
+.dictionary-answer {
+  border-top: 1px solid #dce3d3;
+  margin-top: 15px;
+  padding-top: 15px;
+  overflow-wrap: anywhere;
+}
+.dictionary-answer > strong {
+  font:
+    24px Georgia,
+    serif;
+  color: #2d5940;
+}
+.dictionary-answer ol {
+  margin: 12px 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.75;
+}
+.dictionary-answer li {
+  margin-bottom: 9px;
+}
+.dictionary-answer li small {
+  display: inline;
+  margin-right: 6px;
+  font-size: 10px;
+}
+.dictionary-answer a {
+  font-size: 10px;
+  display: block;
+  margin-top: 7px;
+  color: #60744d;
+}
+.dictionary-check button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}

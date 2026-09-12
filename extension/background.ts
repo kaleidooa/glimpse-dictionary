@@ -1,0 +1,270 @@
+import {
+  API_ORIGIN,
+  defineWord,
+  onlineDefinition,
+  validWord,
+  unavailable,
+} from "./dictionary";
+import { getSettings, WEB_ORIGINS } from "./settings";
+import { VocabularyStore, VOCABULARY_KEY } from "../src/lib/vocabulary";
+const vocabulary = new VocabularyStore({
+  async get() {
+    return (await chrome.storage.local.get(VOCABULARY_KEY))[VOCABULARY_KEY];
+  },
+  async set(value) {
+    await chrome.storage.local.set({ [VOCABULARY_KEY]: value });
+  },
+});
+// Keep saved words and site preferences outside content-script storage access.
+void chrome.storage.local
+  .setAccessLevel?.({ accessLevel: "TRUSTED_CONTEXTS" })
+  ?.catch(() =>
+    console.warn("Glimpse storage access protection could not be applied."),
+  );
+
+let syncQueue = Promise.resolve();
+function syncScripts() {
+  syncQueue = syncQueue
+    .catch(() => {})
+    .then(async () => {
+      const settings = await getSettings();
+      const matches: string[] = [];
+      if (
+        settings.allSites &&
+        (await chrome.permissions.contains({ origins: WEB_ORIGINS }))
+      )
+        matches.push(...WEB_ORIGINS);
+      else
+        for (const origin of settings.siteOrigins)
+          if (await chrome.permissions.contains({ origins: [origin] }))
+            matches.push(origin);
+      const scripts = await chrome.scripting.getRegisteredContentScripts({
+        ids: ["glimpse-reader"],
+      });
+      if (matches.length) {
+        const spec: chrome.scripting.RegisteredContentScript = {
+          id: "glimpse-reader",
+          matches,
+          js: ["content.js"],
+          runAt: "document_idle",
+          allFrames: true,
+          persistAcrossSessions: true,
+        };
+        if (scripts.length) await chrome.scripting.updateContentScripts([spec]);
+        else await chrome.scripting.registerContentScripts([spec]);
+      } else if (scripts.length)
+        await chrome.scripting.unregisterContentScripts({
+          ids: ["glimpse-reader"],
+        });
+    });
+  return syncQueue;
+}
+async function inject(tabId: number) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      files: ["content.js"],
+    });
+  } catch {
+    // Chrome can reject the whole request if a third-party frame lacks permission.
+    // Always allow the authorized top document to work independently.
+    await chrome.scripting.executeScript({
+      target: { tabId, frameIds: [0] },
+      files: ["content.js"],
+    });
+  }
+}
+async function command(tab?: chrome.tabs.Tab) {
+  const active =
+    tab ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
+  if (active?.id === undefined) return;
+  try {
+    let ready = false;
+    try {
+      ready = !!(
+        await chrome.tabs.sendMessage(
+          active.id,
+          { type: "GLIMPSE_PING" },
+          { frameId: 0 },
+        )
+      )?.ready;
+    } catch {
+      /* first activation */
+    }
+    if (!ready) {
+      await inject(active.id);
+      await chrome.tabs.sendMessage(
+        active.id,
+        { type: "GLIMPSE_READY" },
+        { frameId: 0 },
+      );
+    } else
+      await chrome.tabs.sendMessage(active.id, { type: "GLIMPSE_TRIGGER" });
+    await chrome.action.setBadgeText({ tabId: active.id, text: "" });
+  } catch {
+    await chrome.action
+      .setBadgeText({ tabId: active.id, text: "!" })
+      .catch(() => {});
+    await chrome.action
+      .setTitle({
+        tabId: active.id,
+        title:
+          "이 페이지에는 접근할 수 없습니다. 일반 웹페이지에서 확장을 열어 주세요.",
+      })
+      .catch(() => {});
+  }
+}
+chrome.commands.onCommand.addListener((name, tab) => {
+  if (name === "lookup-word") void command(tab);
+});
+chrome.runtime.onInstalled.addListener((details) => {
+  void syncScripts();
+  if (details.reason === "install")
+    void chrome.tabs.create({
+      url: chrome.runtime.getURL("lab/dashboard.html#start"),
+    });
+});
+chrome.runtime.onStartup.addListener(() => {
+  void syncScripts();
+});
+chrome.permissions.onAdded.addListener(() => {
+  void syncScripts();
+});
+chrome.permissions.onRemoved.addListener((permissions) => {
+  const onlyDictionary =
+    permissions.origins?.length &&
+    permissions.origins.every((origin) => origin === API_ORIGIN);
+  void (onlyDictionary ? syncScripts() : stopReaders().then(syncScripts));
+});
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (
+    area === "local" &&
+    ["online", "allSites", "siteOrigins"].some((key) => key in changes)
+  )
+    void syncScripts();
+});
+async function stopReaders() {
+  const tabs = await chrome.tabs.query({});
+  await Promise.allSettled(
+    tabs
+      .filter((t) => t.id !== undefined)
+      .map((t) => chrome.tabs.sendMessage(t.id!, { type: "GLIMPSE_DISABLE" })),
+  );
+}
+chrome.runtime.onMessage.addListener((message, sender, reply) => {
+  if (
+    sender.id !== chrome.runtime.id ||
+    !message ||
+    typeof message !== "object"
+  )
+    return;
+  const extensionPage = !!sender.url?.startsWith(chrome.runtime.getURL(""));
+  const labPage = sender.url?.startsWith(chrome.runtime.getURL("lab/"));
+  if (
+    message.type === "GLIMPSE_DEFINE" &&
+    (sender.tab || extensionPage || labPage) &&
+    validWord(message.word)
+  ) {
+    void getSettings()
+      .then(async (settings) =>
+        defineWord(
+          message.word,
+          settings.online &&
+            (await chrome.permissions.contains({ origins: [API_ORIGIN] })),
+        ),
+      )
+      .then(reply)
+      .catch(() =>
+        reply({
+          word: message.word,
+          meaning: "사전 설정을 확인해 주세요.",
+          language: "ko",
+          source: "조회 불가",
+        }),
+      );
+    return true;
+  }
+  const respond = (action: Promise<unknown>) => {
+    void action
+      .then((value) => reply({ ok: true, value }))
+      .catch((error) =>
+        reply({
+          ok: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "단어장을 저장하지 못했습니다.",
+        }),
+      );
+    return true;
+  };
+  // Content scripts can save only one explicitly chosen word, never list a user's wordbook.
+  if (
+    message.type === "GLIMPSE_WORD_SAVE" &&
+    (sender.tab || extensionPage) &&
+    validWord(message.word)
+  ) {
+    return respond(
+      getSettings()
+        .then(async (settings) =>
+          defineWord(
+            message.word,
+            settings.online &&
+              (await chrome.permissions.contains({ origins: [API_ORIGIN] })),
+          ),
+        )
+        .then((definition) => vocabulary.save(definition)),
+    );
+  }
+  if (!extensionPage) return;
+  if (message.type === "GLIMPSE_WORDS_LIST") return respond(vocabulary.list());
+  if (message.type === "GLIMPSE_WORD_REMOVE" && validWord(message.word))
+    return respond(vocabulary.remove(message.word));
+  if (
+    message.type === "GLIMPSE_WORD_MARK" &&
+    validWord(message.word) &&
+    typeof message.known === "boolean"
+  )
+    return respond(vocabulary.mark(message.word, message.known));
+  if (
+    message.type === "GLIMPSE_WORDS_IMPORT" &&
+    typeof message.text === "string" &&
+    message.text.length <= 5_000_000
+  )
+    return respond(vocabulary.import(message.text));
+  if (message.type === "GLIMPSE_CHECK_ONLINE") {
+    void getSettings()
+      .then(async (settings) =>
+        settings.online &&
+        (await chrome.permissions.contains({ origins: [API_ORIGIN] }))
+          ? onlineDefinition("serendipity")
+          : {
+              ...unavailable("serendipity", "online-disabled"),
+              meaning: "보조 영영 사전이 꺼져 있습니다. 먼저 위 설정을 켜세요.",
+            },
+      )
+      .then(reply)
+      .catch(() => reply(unavailable("serendipity", "network-error")));
+    return true;
+  }
+  if (message.type === "GLIMPSE_ACTIVATE" && Number.isInteger(message.tabId)) {
+    void syncScripts()
+      .then(() => inject(message.tabId))
+      .then(() => reply({ ok: true }))
+      .catch(() =>
+        reply({
+          ok: false,
+          error:
+            "이 페이지에는 접근할 수 없습니다. 일반 HTTP/HTTPS 웹페이지에서 다시 시도해 주세요.",
+        }),
+      );
+    return true;
+  }
+  if (message.type === "GLIMPSE_STOP") {
+    void stopReaders()
+      .then(syncScripts)
+      .then(() => reply({ ok: true }))
+      .catch(() => reply({ ok: false }));
+    return true;
+  }
+});

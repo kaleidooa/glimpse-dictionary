@@ -1,0 +1,28 @@
+name: 동작 문제 / Bug report
+description: 단어 탐지, 스크롤, 단축키 또는 단어장 문제를 알려 주세요.
+body:
+  - type: markdown
+    attributes:
+      value: 비공개 URL, 문장, 단어장 백업이나 시선 기록은 첨부하지 않아도 됩니다. 보안 취약점은 SECURITY.md를 확인하세요.
+  - type: input
+    id: version
+    attributes:
+      label: Glimpse 버전 / Version
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: 브라우저와 운영체제 / Browser and OS
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 순서 / Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대한 결과와 실제 결과 / Expected and actual result
+    validations:
+      required: true

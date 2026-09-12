@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Glimpse — 커서 영어 사전",
+  "version": "0.4.0",
+  "homepage_url": "https://github.com/kaleidooa/glimpse-dictionary",
+  "description": "커서와 단축키로 영어 단어의 한국어 뜻을 확인하세요. 5만 개 이상 표제어를 기기에서 조회하고, 고른 단어만 단어장에 저장합니다.",
+  "minimum_chrome_version": "120",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["activeTab", "scripting", "storage"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Glimpse · 커서 영어 사전",
+    "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png" }
+  },
+  "options_page": "lab/dashboard.html#settings",
+  "commands": {
+    "lookup-word": {
+      "suggested_key": { "default": "Alt+Shift+D" },
+      "description": "커서 아래 영어 단어의 뜻 보기"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self' https://api.dictionaryapi.dev;"
+  }
+}

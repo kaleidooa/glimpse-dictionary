@@ -1,0 +1,60 @@
+﻿<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Glimpse · 커서 사전</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <b>glimpse<span>.</span></b>
+      <div>
+        <button id="words" title="내 단어장">단어장</button
+        ><button id="settings" title="사이트와 사전 설정">설정</button>
+      </div>
+    </header>
+    <main>
+      <h1>읽던 자리에서, 바로.</h1>
+      <p class="lead">
+        단어에 커서를 두고 <kbd id="shortcut">Alt + Shift + D</kbd>
+      </p>
+      <section class="site-card">
+        <div class="section-label">지금 읽는 사이트</div>
+        <strong id="site">확인 중…</strong>
+        <p id="site-state">허용한 페이지에서만 단어를 찾습니다.</p>
+        <button class="primary" id="once" disabled>이번 탭에서 사용</button
+        ><button id="site-enable" disabled>이 사이트에서 항상 사용</button
+        ><button id="site-disable" class="quiet" hidden>
+          이 사이트 자동 사용 해제
+        </button>
+      </section>
+      <div id="status" role="status" aria-live="polite"></div>
+      <section class="dictionary-info">
+        <div class="dictionary-heading">
+          <h2>단어로 바로 확인</h2>
+          <span>영한 · 오프라인</span>
+        </div>
+        <form id="dictionary-form">
+          <label class="sr-only" for="dictionary-word">조회할 영어 단어</label>
+          <div class="dictionary-search">
+            <input
+              id="dictionary-word"
+              type="text"
+              placeholder="serendipity"
+              maxlength="80"
+              autocomplete="off"
+              spellcheck="false"
+            /><button type="submit">조회</button>
+          </div>
+        </form>
+        <div id="dictionary-result" role="status" aria-live="polite"></div>
+      </section>
+      <footer>
+        <button id="help">처음 사용하기</button
+        ><button id="privacy">개인정보·출처</button><span id="version"></span>
+      </footer>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

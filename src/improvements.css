@@ -1,0 +1,127 @@
+.experiment-options {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.experiment-options label {
+  font-size: 9px;
+  color: #7d8c72;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.experiment-options select {
+  border: 1px solid #dce4d2;
+  border-radius: 5px;
+  background: #fffef8;
+  color: #435c39;
+  padding: 8px 4px;
+  font-size: 11px;
+  min-width: 0;
+  width: 100%;
+}
+.protocol-note {
+  font-size: 9px;
+  color: #8d9b82;
+  line-height: 1.8;
+  margin: 0 0 18px;
+}
+.learning-control {
+  margin-top: 17px;
+  border-top: 1px solid #e3e8da;
+  padding-top: 14px;
+}
+.learning-control > span {
+  display: block;
+  font-size: 10px;
+  color: #819471;
+  margin-bottom: 9px;
+}
+.learning-control small,
+.learning-report small {
+  display: block;
+  font-size: 9px;
+  color: #8e9c82;
+  line-height: 1.8;
+  margin-top: 8px;
+}
+.learning-control button {
+  font-size: 10px;
+  padding: 9px 5px;
+}
+.learning-report {
+  border: 1px solid #d9e4cd;
+  background: #eef4e6;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+}
+.learning-report strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.learning-report p {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #647f51;
+  margin: 8px 0;
+}
+.calibration-options {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.calibration-options button[aria-pressed="true"] {
+  background: #e3ecd5;
+  border-color: #92ad76;
+}
+.calibration-options button {
+  font-size: 12px;
+  padding: 11px 16px;
+}
+.validation-points {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 600px;
+}
+.calibration-instruction {
+  bottom: auto;
+  width: min(280px, 44vw);
+}
+.calibration-instruction p {
+  white-space: normal;
+  width: auto;
+}
+.calibration-intro .model-detail {
+  font-size: 10px;
+  line-height: 1.8;
+  margin: 0 0 22px;
+}
+.test-banner {
+  position: sticky;
+  top: 8px;
+  z-index: 15;
+  box-shadow: 0 3px 14px #32432c09;
+}
+.test-banner > span {
+  font-variant-numeric: tabular-nums;
+}
+.results-card .muted {
+  line-height: 1.9;
+}
+.experiment-options select:focus-visible {
+  outline: 2px solid #70925b;
+  outline-offset: 2px;
+}
+.delete-experiments {
+  border: 0;
+  background: transparent;
+  color: #8a796c;
+  font: 10px inherit;
+  margin-top: 14px;
+  padding: 2px 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

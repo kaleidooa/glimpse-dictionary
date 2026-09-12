@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "builtAt": "2026-09-12T12:38:51.582Z",
+  "uniqueWords": 51109,
+  "sources": {
+    "wiktionary": {
+      "name": "한국어 위키낱말사전",
+      "license": "CC-BY-SA-4.0",
+      "url": "https://kaikki.org/kowiktionary/%EC%98%81%EC%96%B4/index.html",
+      "sha256": "a3a49529fab1cf568ebc2da9676f67aba835d0b6fb8fb305ff13b0a63bb96e14"
+    },
+    "kengdic": {
+      "name": "Kengdic · Joe Speigle 및 기여자",
+      "license": "MPL-2.0",
+      "url": "https://github.com/garfieldnate/kengdic",
+      "sha256": "d23236d5676f506514721e605534647ba4735a85bbb76b9e12d1ec067b8cfdb4"
+    }
+  },
+  "counts": {
+    "wiktionary": {
+      "words": 13649,
+      "senses": 19747
+    },
+    "kengdic": {
+      "words": 45771,
+      "senses": 73535
+    }
+  },
+  "bytes": {
+    "wiktionary": 2530709,
+    "kengdic": 3578364
+  },
+  "changes": "English single-word entries only; whitespace/markup normalization; duplicate removal; Korean gloss filter; exact reversal of Kengdic glosses; alphabetical JSON shards. WordNet forms and Glimpse editorial entries are stored separately."
+}
