@@ -1,3 +1,5 @@
+import { definitionLabel } from "./lib/definition-labels";
+import { t as tr } from "./lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
@@ -14,6 +16,7 @@ import {
   Upload,
 } from "lucide-react";
 import { DictionaryCheck } from "./components/DictionaryCheck";
+import { LanguageSelect, useLocale } from "./components/LanguageSelect";
 import { vocabularyClient } from "./lib/vocabulary-client";
 import {
   VOCABULARY_KEY,
@@ -26,9 +29,6 @@ import { defineWord, API_ORIGIN } from "../extension/dictionary";
 import { getSettings, WEB_ORIGINS, type Settings } from "../extension/settings";
 
 const packaged = location.protocol === "chrome-extension:";
-const privacyURL = packaged
-  ? chrome.runtime.getURL("privacy.html")
-  : REPOSITORY + "/blob/main/PRIVACY.md";
 const route = () =>
   ["start", "words", "settings"].includes(location.hash.slice(1))
     ? location.hash.slice(1)
@@ -42,6 +42,14 @@ function download(text: string, filename: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export function Dashboard() {
+  const locale = useLocale();
+  const privacyURL = packaged
+    ? chrome.runtime.getURL(
+        locale === "ko" ? "privacy.ko.html" : "privacy.html",
+      )
+    : REPOSITORY +
+      "/blob/main/" +
+      (locale === "ko" ? "docs/ko/PRIVACY.md" : "PRIVACY.md");
   const [page, setPage] = useState(route),
     [words, setWords] = useState<SavedWord[]>([]);
   const [notice, setNotice] = useState(""),
@@ -72,7 +80,7 @@ export function Dashboard() {
       const commands = await chrome.commands.getAll();
       setShortcut(
         commands.find((c) => c.name === "lookup-word")?.shortcut ||
-          "단축키를 지정해 주세요",
+          tr("Set a shortcut", "단축키를 지정해 주세요"),
       );
     }
   }, []);
@@ -121,7 +129,10 @@ export function Dashboard() {
       setNotice(
         error instanceof Error
           ? error.message
-          : "처리하지 못했습니다. 다시 시도해 주세요.",
+          : tr(
+              "Could not complete the request. Please retry.",
+              "처리하지 못했습니다. 다시 시도해 주세요.",
+            ),
       );
     } finally {
       setBusy(false);
@@ -139,7 +150,10 @@ export function Dashboard() {
       enabled &&
       !(await chrome.permissions.request({ origins: [API_ORIGIN] }))
     )
-      return "접근을 허용하지 않았습니다. 기기 사전은 계속 사용할 수 있어요.";
+      return tr(
+        "Access was not granted. You can still use the local dictionary.",
+        "접근을 허용하지 않았습니다. 기기 사전은 계속 사용할 수 있어요.",
+      );
     await chrome.storage.local.set({ online: enabled });
     if (
       !enabled &&
@@ -148,15 +162,18 @@ export function Dashboard() {
     )
       await chrome.permissions.remove({ origins: [API_ORIGIN] });
     return enabled
-      ? "보조 영영 사전을 켰습니다. 누락 단어만 전송합니다."
-      : "보조 사전을 껐습니다.";
+      ? tr(
+          "Online English dictionary enabled. Only missing words will be sent.",
+          "보조 영영 사전을 켰습니다. 누락 단어만 전송합니다.",
+        )
+      : tr("Online dictionary disabled.", "보조 사전을 껐습니다.");
   }
   async function toggleAll(enabled: boolean) {
     if (
       enabled &&
       !(await chrome.permissions.request({ origins: WEB_ORIGINS }))
     )
-      return "접근을 허용하지 않았습니다.";
+      return tr("Access was not granted.", "접근을 허용하지 않았습니다.");
     const update: Partial<Settings> = enabled
       ? { allSites: true }
       : { allSites: false, siteOrigins: [], online: false };
@@ -166,8 +183,14 @@ export function Dashboard() {
       await chrome.runtime.sendMessage({ type: "GLIMPSE_STOP" });
     }
     return enabled
-      ? "자동 사용을 켰습니다. 이미 열어 둔 웹페이지는 새로고침해 주세요."
-      : "전체 사이트 권한과 기존 사이트 목록, 보조 사전 설정을 해제했습니다.";
+      ? tr(
+          "Automatic use enabled. Refresh webpages that are already open.",
+          "자동 사용을 켰습니다. 이미 열어 둔 웹페이지는 새로고침해 주세요.",
+        )
+      : tr(
+          "All-site access, the site list and online lookup have been cleared.",
+          "전체 사이트 권한과 기존 사이트 목록, 보조 사전 설정을 해제했습니다.",
+        );
   }
   return (
     <div className="dashboard">
@@ -179,13 +202,16 @@ export function Dashboard() {
           document.getElementById("main-content")?.focus();
         }}
       >
-        본문으로 이동
+        {tr("Skip to content", "본문으로 이동")}{" "}
       </a>
       <header className="dash-header">
         <a className="wordmark" href="./index.html">
           glimpse<span>.</span>
         </a>
-        <span className="dash-edition">영어를 읽는 나만의 도구</span>
+        <span className="dash-edition">
+          {tr("An English reading companion", "영어를 읽는 나만의 도구")}
+        </span>
+        <LanguageSelect />
         <a
           className="github-link"
           href={REPOSITORY}
@@ -197,11 +223,11 @@ export function Dashboard() {
       </header>
       <div className="dash-layout">
         <aside className="dash-sidebar">
-          <nav aria-label="Glimpse 메뉴">
+          <nav aria-label={tr("Glimpse navigation", "Glimpse 메뉴")}>
             {[
-              ["start", "처음 사용하기", MousePointer2],
-              ["words", "내 단어장", BookOpen],
-              ["settings", "설정", Settings2],
+              ["start", tr("Getting started", "처음 사용하기"), MousePointer2],
+              ["words", tr("My words", "내 단어장"), BookOpen],
+              ["settings", tr("Settings", "설정"), Settings2],
             ].map(([key, label, Icon]) => {
               const Symbol = Icon as typeof BookOpen;
               return (
@@ -219,13 +245,23 @@ export function Dashboard() {
           </nav>
           <div className="local-note">
             <ShieldCheck size={20} />
-            <strong>내 기기에, 내가 고른 단어만.</strong>
+            <strong>
+              {tr(
+                "Your words, on your device.",
+                "내 기기에, 내가 고른 단어만.",
+              )}
+            </strong>
             <p>
-              저장 버튼을 누른 단어만 단어장에 남습니다. 계정과 자동 동기화는
-              사용하지 않습니다.
+              {tr(
+                "Only words you explicitly save go into the wordbook. No account or automatic sync.",
+                "저장 버튼을 누른 단어만 단어장에 남습니다. 계정과 자동 동기화는 사용하지 않습니다.",
+              )}{" "}
             </p>
             <a href={privacyURL} target="_blank" rel="noreferrer">
-              개인정보와 데이터 출처 ↗
+              {tr(
+                "Privacy and data sources ↗",
+                "개인정보와 데이터 출처 ↗",
+              )}{" "}
             </a>
           </div>
           <small className="dash-version">
@@ -236,7 +272,10 @@ export function Dashboard() {
           {notice && (
             <div className="dash-notice" role="status">
               <span>{notice}</span>
-              <button aria-label="안내 닫기" onClick={() => setNotice("")}>
+              <button
+                aria-label={tr("Dismiss message", "안내 닫기")}
+                onClick={() => setNotice("")}
+              >
                 ×
               </button>
             </div>
@@ -246,53 +285,84 @@ export function Dashboard() {
               <div className="page-heading">
                 <div className="eyebrow">A SMALL TOOL FOR A GOOD READ</div>
                 <h1>
-                  읽던 자리에서
-                  <br />
-                  뜻을 만나세요.
+                  {tr("Look up a word.", "읽던 자리에서")} <br />
+                  {tr("Keep reading.", "뜻을 만나세요.")}{" "}
                 </h1>
                 <p>
-                  드래그하거나 검색창을 열 필요 없이.
+                  {tr(
+                    "No need to select text or open a search box.",
+                    "드래그하거나 검색창을 열 필요 없이.",
+                  )}{" "}
                   <br />
-                  영어 단어에 커서를 두고 <kbd>{shortcut}</kbd>를 누르세요.
+                  {tr(
+                    "Point at an English word and press",
+                    "영어 단어에 커서를 두고",
+                  )}{" "}
+                  <kbd>{shortcut}</kbd>
+                  {tr(".", "를 누르세요.")}{" "}
                 </p>
               </div>
               <div className="onboard-grid">
                 <section className="steps-panel">
-                  <h2>첫 단어까지, 세 단계.</h2>
+                  <h2>
+                    {tr(
+                      "Three steps to your first word.",
+                      "첫 단어까지, 세 단계.",
+                    )}
+                  </h2>
                   <ol>
                     <li>
                       <span>01</span>
                       <div>
-                        <strong>읽을 웹페이지 열기</strong>
+                        <strong>
+                          {tr("Open a webpage", "읽을 웹페이지 열기")}
+                        </strong>
                         <p>
-                          뉴스, 블로그, 기술 문서의 일반 텍스트에서 사용할 수
-                          있어요.
+                          {tr(
+                            "Works with regular text in articles, blogs and technical documentation.",
+                            "뉴스, 블로그, 기술 문서의 일반 텍스트에서 사용할 수 있어요.",
+                          )}{" "}
                         </p>
                       </div>
                     </li>
                     <li>
                       <span>02</span>
                       <div>
-                        <strong>확장 아이콘에서 이 사이트 켜기</strong>
+                        <strong>
+                          {tr(
+                            "Enable Glimpse on the page",
+                            "확장 아이콘에서 이 사이트 켜기",
+                          )}
+                        </strong>
                         <p>
-                          ‘이번 탭에서 사용’으로 먼저 써 보고, 자주 읽는
-                          사이트만 자동 사용을 켜세요.
+                          {tr(
+                            "Start with “Use on this tab”. Enable automatic use for sites you read often.",
+                            "‘이번 탭에서 사용’으로 먼저 써 보고, 자주 읽는 사이트만 자동 사용을 켜세요.",
+                          )}{" "}
                         </p>
                       </div>
                     </li>
                     <li>
                       <span>03</span>
                       <div>
-                        <strong>커서 두고, 단축키 누르기</strong>
+                        <strong>
+                          {tr(
+                            "Point and press the shortcut",
+                            "커서 두고, 단축키 누르기",
+                          )}
+                        </strong>
                         <p>
-                          뜻에서 ‘단어장에 저장’을 누르면 나중에 다시 볼 수
-                          있어요. Esc나 스크롤로 닫습니다.
+                          {tr(
+                            "Click “Save word” to keep a definition. Press Esc or scroll to close it.",
+                            "뜻에서 ‘단어장에 저장’을 누르면 나중에 다시 볼 수 있어요. Esc나 스크롤로 닫습니다.",
+                          )}{" "}
                         </p>
                       </div>
                     </li>
                   </ol>
                   <a className="button primary" href="./index.html">
-                    읽기 화면에서 연습 <ArrowUpRight size={16} />
+                    {tr("Practice on the reading page", "읽기 화면에서 연습")}{" "}
+                    <ArrowUpRight size={16} />
                   </a>
                 </section>
                 <DictionaryCheck
@@ -308,17 +378,31 @@ export function Dashboard() {
               </div>
               <section className="help-row">
                 <div>
-                  <h2>인터넷 사전은 선택이에요.</h2>
+                  <h2>
+                    {tr(
+                      "Online lookup is optional.",
+                      "인터넷 사전은 선택이에요.",
+                    )}
+                  </h2>
                   <p>
-                    한국어 뜻 51,109개 표제어를 기기에서 조회합니다. 보조 영영
-                    사전은 기본으로 꺼져 있어요.
+                    {tr(
+                      "Look up Korean definitions for 51,109 headwords on your device. The online English dictionary is off by default.",
+                      "한국어 뜻 51,109개 표제어를 기기에서 조회합니다. 보조 영영 사전은 기본으로 꺼져 있어요.",
+                    )}{" "}
                   </p>
                 </div>
                 <div>
-                  <h2>단축키가 반응하지 않나요?</h2>
+                  <h2>
+                    {tr(
+                      "Shortcut not responding?",
+                      "단축키가 반응하지 않나요?",
+                    )}
+                  </h2>
                   <p>
-                    단어 위로 커서를 조금 움직여 다시 누르세요. 확장을
-                    업데이트했다면 읽던 페이지도 새로고침하세요.
+                    {tr(
+                      "Move the pointer over the word and try again. After updating the extension, refresh the webpage too.",
+                      "단어 위로 커서를 조금 움직여 다시 누르세요. 확장을 업데이트했다면 읽던 페이지도 새로고침하세요.",
+                    )}{" "}
                   </p>
                   {packaged && (
                     <button
@@ -328,14 +412,16 @@ export function Dashboard() {
                         })
                       }
                     >
-                      단축키 확인
+                      {tr("Check shortcut", "단축키 확인")}{" "}
                     </button>
                   )}
                 </div>
               </section>
               <p className="support-note">
-                Chrome 내부 화면·웹 스토어·PDF 뷰어·이미지 속 글자는 지원하지
-                않습니다. 시선 추적은 설정의 별도 실험실에서 사용할 수 있어요.
+                {tr(
+                  "Chrome internal pages, the Web Store, PDF viewers and text in images are unsupported. Eye tracking is available in the separate lab in Settings.",
+                  "Chrome 내부 화면·웹 스토어·PDF 뷰어·이미지 속 글자는 지원하지 않습니다. 시선 추적은 설정의 별도 실험실에서 사용할 수 있어요.",
+                )}{" "}
               </p>
             </>
           )}
@@ -343,18 +429,23 @@ export function Dashboard() {
             <>
               <div className="page-heading compact">
                 <div className="eyebrow">YOUR WORDS, AT YOUR PACE</div>
-                <h1>읽다가 만난 단어들.</h1>
+                <h1>{tr("Your saved words.", "읽다가 만난 단어들.")}</h1>
                 <p>
-                  기억하고 싶은 단어를 모으고, 익숙해진 단어에는 표시를
-                  남기세요.
+                  {tr(
+                    "Keep words for later and mark the ones you know.",
+                    "기억하고 싶은 단어를 모으고, 익숙해진 단어에는 표시를 남기세요.",
+                  )}{" "}
                 </p>
               </div>
               <div className="wordbook-toolbar">
                 <label className="word-search">
                   <Search size={17} />
                   <input
-                    aria-label="단어장 검색"
-                    placeholder="단어 또는 뜻 검색"
+                    aria-label={tr("Search saved words", "단어장 검색")}
+                    placeholder={tr(
+                      "Search by word or meaning",
+                      "단어 또는 뜻 검색",
+                    )}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
@@ -362,12 +453,12 @@ export function Dashboard() {
                 <div
                   className="word-filters"
                   role="group"
-                  aria-label="학습 상태"
+                  aria-label={tr("Learning status", "학습 상태")}
                 >
                   {[
-                    ["all", "전체"],
-                    ["learning", "학습 중"],
-                    ["known", "익숙한 단어"],
+                    ["all", tr("All", "전체")],
+                    ["learning", tr("Learning", "학습 중")],
+                    ["known", tr("Familiar", "익숙한 단어")],
                   ].map(([value, label]) => (
                     <button
                       key={value}
@@ -381,7 +472,12 @@ export function Dashboard() {
               </div>
               <div className="wordbook-summary">
                 <span>
-                  {visible.length}개 · 전체 {words.length}/1,000
+                  {tr(
+                    "{0} shown · {1}/1,000 total",
+                    "{0}개 · 전체 {1}/1,000",
+                    visible.length,
+                    words.length,
+                  )}
                 </span>
                 <div>
                   <button
@@ -406,17 +502,17 @@ export function Dashboard() {
                       )
                     }
                   >
-                    <Download size={14} /> 백업
+                    <Download size={14} /> {tr("Backup", "백업")}{" "}
                   </button>
                   <button disabled={busy} onClick={() => file.current?.click()}>
-                    <Upload size={14} /> 가져오기
+                    <Upload size={14} /> {tr("Import", "가져오기")}{" "}
                   </button>
                   <input
                     ref={file}
                     hidden
                     type="file"
                     accept=".json,application/json"
-                    aria-label="단어장 JSON 백업"
+                    aria-label={tr("Wordbook JSON backup", "단어장 JSON 백업")}
                     onChange={(event) => {
                       const selected = event.target.files?.[0];
                       event.target.value = "";
@@ -424,12 +520,19 @@ export function Dashboard() {
                       void act(async () => {
                         if (selected.size > 5_000_000)
                           throw new Error(
-                            "5MB 이하의 JSON 백업을 선택해 주세요.",
+                            tr(
+                              "Choose a JSON backup no larger than 5 MB.",
+                              "5MB 이하의 JSON 백업을 선택해 주세요.",
+                            ),
                           );
                         const result = await vocabularyClient.import(
                           await selected.text(),
                         );
-                        return `${result.added}개를 추가했습니다. 기존 단어는 유지했습니다.`;
+                        return tr(
+                          "Added {0} words. Existing words were kept.",
+                          "{0}개를 추가했습니다. 기존 단어는 유지했습니다.",
+                          result.added,
+                        );
                       });
                     }}
                   />
@@ -440,17 +543,26 @@ export function Dashboard() {
                   <BookOpen size={34} />
                   <h2>
                     {words.length
-                      ? "검색에 맞는 단어가 없어요."
-                      : "다음에 만날 단어부터, 여기로."}
+                      ? tr("No matching words.", "검색에 맞는 단어가 없어요.")
+                      : tr(
+                          "No saved words yet.",
+                          "다음에 만날 단어부터, 여기로.",
+                        )}
                   </h2>
                   <p>
                     {words.length
-                      ? "다른 검색어나 학습 상태를 선택해 보세요."
-                      : "단어 뜻 팝업에서 ‘단어장에 저장’을 눌러 주세요. 단어와 뜻만 저장하고 읽던 문장·주소는 남기지 않습니다."}
+                      ? tr(
+                          "Try another search or learning filter.",
+                          "다른 검색어나 학습 상태를 선택해 보세요.",
+                        )
+                      : tr(
+                          "Click “Save word” in a definition. Only the word and meaning are saved, without the sentence or page URL.",
+                          "단어 뜻 팝업에서 ‘단어장에 저장’을 눌러 주세요. 단어와 뜻만 저장하고 읽던 문장·주소는 남기지 않습니다.",
+                        )}
                   </p>
                   {!words.length && (
                     <a className="button primary" href="#start">
-                      첫 단어 찾아보기
+                      {tr("Look up your first word", "첫 단어 찾아보기")}{" "}
                     </a>
                   )}
                 </div>
@@ -465,14 +577,23 @@ export function Dashboard() {
                         <div>
                           <h2>{word.word}</h2>
                           {word.lemma && word.lemma !== word.word && (
-                            <small>원형 {word.lemma}</small>
+                            <small>
+                              {tr("Base form", "원형")} {word.lemma}
+                            </small>
                           )}
                         </div>
                         <div className="word-actions">
                           <button
                             disabled={busy}
                             aria-pressed={word.known}
-                            aria-label={`${word.word} ${word.known ? "학습 중으로" : "익숙한 단어로"} 표시`}
+                            aria-label={tr(
+                              "Mark {0} as {1}",
+                              "{0} {1} 표시",
+                              word.word,
+                              word.known
+                                ? tr("learning", "학습 중으로")
+                                : tr("familiar", "익숙한 단어로"),
+                            )}
                             onClick={() =>
                               void act(async () => {
                                 await vocabularyClient.mark(
@@ -483,15 +604,21 @@ export function Dashboard() {
                             }
                           >
                             <Check size={16} />
-                            {word.known ? "익숙해요" : "익숙한 단어"}
+                            {word.known
+                              ? tr("Familiar", "익숙해요")
+                              : tr("Familiar", "익숙한 단어")}
                           </button>
                           <button
                             disabled={busy}
-                            aria-label={`${word.word} 삭제`}
+                            aria-label={tr("Delete {0}", "{0} 삭제", word.word)}
                             onClick={() =>
                               void act(async () => {
                                 await vocabularyClient.remove(word.word);
-                                return `${word.word}를 단어장에서 삭제했습니다.`;
+                                return tr(
+                                  "Removed {0} from your wordbook.",
+                                  "{0}를 단어장에서 삭제했습니다.",
+                                  word.word,
+                                );
                               })
                             }
                           >
@@ -503,7 +630,9 @@ export function Dashboard() {
                         <ol>
                           {word.senses.map((sense, i) => (
                             <li key={i}>
-                              <small>{sense.partOfSpeech}</small>
+                              <small>
+                                {definitionLabel(sense.partOfSpeech)}
+                              </small>
                               {sense.meaning}
                             </li>
                           ))}
@@ -513,7 +642,7 @@ export function Dashboard() {
                       )}
                       <footer>
                         <span>
-                          {word.source} · {word.license}
+                          {definitionLabel(word.source)} · {word.license}
                         </span>
                         {word.sourceLinks.map((link) => (
                           <a
@@ -522,7 +651,7 @@ export function Dashboard() {
                             target="_blank"
                             rel="noreferrer"
                           >
-                            {link.label} 출처 ↗
+                            {link.label} {tr("source ↗", "출처 ↗")}{" "}
                           </a>
                         ))}
                       </footer>
@@ -530,15 +659,18 @@ export function Dashboard() {
                   ))}
                   {visible.length > shown && (
                     <button onClick={() => setShown((value) => value + 50)}>
-                      다음 {Math.min(50, visible.length - shown)}개 보기
+                      {tr("Show next", "다음")}{" "}
+                      {Math.min(50, visible.length - shown)}
+                      {tr(" words", "개 보기")}{" "}
                     </button>
                   )}
                 </div>
               )}
               <p className="support-note">
-                이 기기의 저장 공간에 보관합니다. 확장을 삭제하면 사라질 수
-                있으니 JSON 백업을 내려받아 두세요. CSV는 다른 학습 도구로 옮길
-                때 사용할 수 있습니다.
+                {tr(
+                  "Saved on this device. Removing the extension can delete the wordbook, so keep a JSON backup. Use CSV to move words to another study tool.",
+                  "이 기기의 저장 공간에 보관합니다. 확장을 삭제하면 사라질 수 있으니 JSON 백업을 내려받아 두세요. CSV는 다른 학습 도구로 옮길 때 사용할 수 있습니다.",
+                )}{" "}
               </p>
             </>
           )}
@@ -546,21 +678,38 @@ export function Dashboard() {
             <>
               <div className="page-heading compact">
                 <div className="eyebrow">ONLY WHAT YOU CHOOSE</div>
-                <h1>읽는 방식에 맞게.</h1>
-                <p>사용할 사이트와 외부 연결을 직접 고릅니다.</p>
+                <h1>{tr("Settings", "읽는 방식에 맞게.")}</h1>
+                <p>
+                  {tr(
+                    "Choose your sites and dictionary connections.",
+                    "사용할 사이트와 외부 연결을 직접 고릅니다.",
+                  )}
+                </p>
               </div>
               {!packaged && (
                 <div className="dash-notice">
-                  웹 데모에서는 사이트 권한을 바꾸지 않습니다. 설치한 Chrome
-                  확장 아이콘에서 설정을 열어 주세요.
+                  {tr(
+                    "Site permissions are available only in the installed Chrome extension. Open Settings from its popup.",
+                    "웹 데모에서는 사이트 권한을 바꾸지 않습니다. 설치한 Chrome 확장 아이콘에서 설정을 열어 주세요.",
+                  )}{" "}
                 </div>
               )}
               <section className="setting-card">
-                <h2>단축키</h2>
+                <h2>{tr("Keyboard shortcut", "단축키")}</h2>
                 <div className="setting-line">
                   <div>
-                    <strong>커서 아래 단어 조회</strong>
-                    <p>다른 확장과 겹치면 Chrome에서 변경할 수 있어요.</p>
+                    <strong>
+                      {tr(
+                        "Look up the word under the pointer",
+                        "커서 아래 단어 조회",
+                      )}
+                    </strong>
+                    <p>
+                      {tr(
+                        "Change it in Chrome if another extension uses the same shortcut.",
+                        "다른 확장과 겹치면 Chrome에서 변경할 수 있어요.",
+                      )}
+                    </p>
                   </div>
                   <kbd>{shortcut}</kbd>
                 </div>
@@ -572,29 +721,44 @@ export function Dashboard() {
                       })
                     }
                   >
-                    Chrome에서 단축키 변경 ↗
+                    {tr(
+                      "Change shortcut in Chrome ↗",
+                      "Chrome에서 단축키 변경 ↗",
+                    )}{" "}
                   </button>
                 )}
               </section>
               <section className="setting-card">
-                <h2>사전과 연결</h2>
+                <h2>{tr("Dictionaries", "사전과 연결")}</h2>
                 <div className="setting-line">
                   <div>
-                    <strong>기기 영한 사전</strong>
+                    <strong>
+                      {tr(
+                        "Offline English-to-Korean dictionary",
+                        "기기 영한 사전",
+                      )}
+                    </strong>
                     <p>
-                      51,109개 공개 표제어와 기본 교정 뜻. 항상 사용할 수
-                      있습니다.
+                      {tr(
+                        "51,109 public headwords plus original corrections. Always available.",
+                        "51,109개 공개 표제어와 기본 교정 뜻. 항상 사용할 수 있습니다.",
+                      )}{" "}
                     </p>
                   </div>
-                  <span className="setting-tag">기본 사용</span>
+                  <span className="setting-tag">
+                    {tr("Always on", "기본 사용")}
+                  </span>
                 </div>
                 <label className="setting-line">
                   <div>
-                    <strong>보조 영영 사전</strong>
+                    <strong>
+                      {tr("Online English dictionary", "보조 영영 사전")}
+                    </strong>
                     <p>
-                      기기 사전에 없는 단어 하나만 dictionaryapi.dev로
-                      전송합니다. 문장·페이지 주소·쿠키는 보내지 않으며 서버에는
-                      IP가 보일 수 있습니다.
+                      {tr(
+                        "Sends only a missing word to dictionaryapi.dev. No sentences, page URLs or cookies. The server can see your IP address.",
+                        "기기 사전에 없는 단어 하나만 dictionaryapi.dev로 전송합니다. 문장·페이지 주소·쿠키는 보내지 않으며 서버에는 IP가 보일 수 있습니다.",
+                      )}{" "}
                     </p>
                   </div>
                   <input
@@ -615,23 +779,33 @@ export function Dashboard() {
                           type: "GLIMPSE_CHECK_ONLINE",
                         });
                         return result.status === "found"
-                          ? "연결되었습니다. 기기 영한 사전을 우선 사용합니다."
+                          ? tr(
+                              "Connected. The offline dictionary is still used first.",
+                              "연결되었습니다. 기기 영한 사전을 우선 사용합니다.",
+                            )
                           : result.meaning;
                       })
                     }
                   >
-                    온라인 연결 확인
+                    {tr("Check online connection", "온라인 연결 확인")}{" "}
                   </button>
                 )}
               </section>
               <section className="setting-card">
-                <h2>사이트 접근</h2>
+                <h2>{tr("Site access", "사이트 접근")}</h2>
                 <label className="setting-line">
                   <div>
-                    <strong>모든 웹사이트에서 자동 사용</strong>
+                    <strong>
+                      {tr(
+                        "Use automatically on all websites",
+                        "모든 웹사이트에서 자동 사용",
+                      )}
+                    </strong>
                     <p>
-                      일반 HTTP/HTTPS 사이트에서 작동합니다. 끄면 전체 권한과
-                      기존 사이트 목록, 보조 사전 설정도 해제합니다.
+                      {tr(
+                        "Works on regular HTTP/HTTPS sites. Turning this off also clears the site list and online dictionary setting.",
+                        "일반 HTTP/HTTPS 사이트에서 작동합니다. 끄면 전체 권한과 기존 사이트 목록, 보조 사전 설정도 해제합니다.",
+                      )}{" "}
                     </p>
                   </div>
                   <input
@@ -644,7 +818,7 @@ export function Dashboard() {
                   />
                 </label>
                 <div className="site-list">
-                  <h3>개별 허용 사이트</h3>
+                  <h3>{tr("Allowed sites", "개별 허용 사이트")}</h3>
                   {settings.siteOrigins.length ? (
                     settings.siteOrigins.map((origin) => (
                       <div key={origin}>
@@ -665,18 +839,23 @@ export function Dashboard() {
                               await chrome.runtime.sendMessage({
                                 type: "GLIMPSE_STOP",
                               });
-                              return "사이트 접근을 해제했습니다. 다른 허용 사이트는 새로고침으로 다시 사용할 수 있습니다.";
+                              return tr(
+                                "Site access removed. Refresh other allowed sites to use Glimpse there again.",
+                                "사이트 접근을 해제했습니다. 다른 허용 사이트는 새로고침으로 다시 사용할 수 있습니다.",
+                              );
                             })
                           }
                         >
-                          해제
+                          {tr("Remove", "해제")}{" "}
                         </button>
                       </div>
                     ))
                   ) : (
                     <p>
-                      허용한 사이트가 없습니다. 읽던 페이지의 확장 아이콘에서
-                      추가하세요.
+                      {tr(
+                        "No allowed sites. Add one from the extension popup on a webpage.",
+                        "허용한 사이트가 없습니다. 읽던 페이지의 확장 아이콘에서 추가하세요.",
+                      )}{" "}
                     </p>
                   )}
                 </div>
@@ -684,23 +863,28 @@ export function Dashboard() {
               <section className="setting-card lab-setting">
                 <div>
                   <FlaskConical size={22} />
-                  <h2>시선 추적 실험실</h2>
+                  <h2>{tr("Eye-tracking lab", "시선 추적 실험실")}</h2>
                   <span className="setting-tag">BETA</span>
                 </div>
                 <p>
-                  별도 읽기 화면에서 웹캠 보정과 정확도를 실험합니다. 카메라는
-                  직접 연결할 때만 켜지며 영상은 저장·전송하지 않습니다. 실험용
-                  특징 수치와 문장·기록은 이 브라우저에 보관합니다.
+                  {tr(
+                    "Test webcam calibration and accuracy on a separate reading page. The camera starts only when connected; frames are not saved or transmitted. Features, sentences and experiment records stay in this browser.",
+                    "별도 읽기 화면에서 웹캠 보정과 정확도를 실험합니다. 카메라는 직접 연결할 때만 켜지며 영상은 저장·전송하지 않습니다. 실험용 특징 수치와 문장·기록은 이 브라우저에 보관합니다.",
+                  )}{" "}
                 </p>
                 <a className="button" href="./index.html#lab">
-                  실험실 열기 ↗
+                  {tr("Open lab ↗", "실험실 열기 ↗")}{" "}
                 </a>
               </section>
               <section className="setting-card">
-                <h2>함께 더 좋은 사전으로.</h2>
+                <h2>
+                  {tr("Report a dictionary issue", "함께 더 좋은 사전으로.")}
+                </h2>
                 <p>
-                  뜻이 어색하거나 단어를 찾지 못했다면 GitHub에 제보할 수
-                  있어요. 비공개 문장이나 페이지 주소는 첨부하지 않아도 됩니다.
+                  {tr(
+                    "Found a missing word or an odd definition? Report it on GitHub. Private sentences and page URLs are not needed.",
+                    "뜻이 어색하거나 단어를 찾지 못했다면 GitHub에 제보할 수 있어요. 비공개 문장이나 페이지 주소는 첨부하지 않아도 됩니다.",
+                  )}{" "}
                 </p>
                 <a
                   className="button"
@@ -708,7 +892,7 @@ export function Dashboard() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  문제 제보 ↗
+                  {tr("Report an issue ↗", "문제 제보 ↗")}{" "}
                 </a>
                 <a
                   className="text-link"
@@ -716,7 +900,10 @@ export function Dashboard() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  개인정보·사전 라이선스
+                  {tr(
+                    "Privacy and dictionary licenses",
+                    "개인정보·사전 라이선스",
+                  )}{" "}
                 </a>
               </section>
             </>

@@ -86,16 +86,35 @@ it("rejects other senders and malformed word messages before making requests", a
   ).toBeUndefined();
   expect(fetch).not.toHaveBeenCalled();
 });
+it("shares only the interface language with content scripts and broadcasts language changes", async () => {
+  expect(await message({ type: "GLIMPSE_GET_LOCALE" })).toBe("en");
+  settings["glimpse.language"] = "ko";
+  api.storage.onChanged.fire(
+    { "glimpse.language": { newValue: "ko" } },
+    "local",
+  );
+  await Promise.resolve();
+  expect(api.tabs.sendMessage).toHaveBeenCalledWith(7, {
+    type: "GLIMPSE_LOCALE",
+    locale: "ko",
+  });
+  expect(await message({ type: "GLIMPSE_GET_LOCALE" })).toBe("ko");
+  expect(await message({ type: "GLIMPSE_WORDS_LIST" })).toBeUndefined();
+  expect(
+    (await message({ type: "GLIMPSE_DEFINE", word: "missingword" })).meaning,
+  ).toContain("기기 사전");
+  expect(fetch).not.toHaveBeenCalled();
+});
 it("requires both the online setting and host permission for external dictionary traffic", async () => {
   settings.online = true;
   expect(
     (await message({ type: "GLIMPSE_DEFINE", word: "serendipity" })).source,
-  ).toBe("온라인 조회 꺼짐");
+  ).toBe("Online lookup off");
   permissions.add("https://api.dictionaryapi.dev/*");
   settings.online = false;
   expect(
     (await message({ type: "GLIMPSE_DEFINE", word: "serendipity" })).source,
-  ).toBe("온라인 조회 꺼짐");
+  ).toBe("Online lookup off");
   expect(fetch).not.toHaveBeenCalled();
 });
 it("does not grant page messages the ability to activate other tabs or stop readers", async () => {

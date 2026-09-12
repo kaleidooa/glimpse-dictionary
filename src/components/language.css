@@ -1,0 +1,53 @@
+.language-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font:
+    13px/1.5 system-ui,
+    sans-serif;
+  color: #344c3c;
+  flex-wrap: wrap;
+}
+.language-select select {
+  font: inherit;
+  color: inherit;
+  background: #fffdf7;
+  padding: 6px 9px;
+  border: 1px solid #b8c7ab;
+  border-radius: 6px;
+  max-width: 130px;
+}
+.language-select select:focus-visible {
+  outline: 2px solid #326a47;
+  outline-offset: 2px;
+}
+.language-select [role="alert"] {
+  max-width: 230px;
+}
+.dash-header {
+  flex-wrap: wrap;
+}
+.dash-header .wordmark {
+  order: 0;
+}
+.dash-header .dash-edition {
+  order: 1;
+}
+.dash-header .language-select {
+  order: 2;
+  margin-left: auto;
+}
+.dash-header .github-link {
+  order: 3;
+}
+.product-nav {
+  flex-wrap: wrap;
+}
+.lab-return {
+  flex-wrap: wrap;
+}
+@media (max-width: 620px) {
+  .language-select > span:first-child {
+    display: none;
+  }
+}

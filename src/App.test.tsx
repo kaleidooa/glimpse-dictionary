@@ -1,4 +1,7 @@
 // @vitest-environment jsdom
+import { beforeEach as beforeLanguageTest } from "vitest";
+import { applyLocale } from "./lib/i18n";
+beforeLanguageTest(() => applyLocale("ko"));
 import { beforeEach, afterEach, it, expect, vi } from "vitest";
 import {
   act,

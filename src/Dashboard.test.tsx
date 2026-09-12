@@ -1,4 +1,7 @@
 // @vitest-environment jsdom
+import { beforeEach as beforeLanguageTest } from "vitest";
+import { applyLocale } from "./lib/i18n";
+beforeLanguageTest(() => applyLocale("ko"));
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
   act,
@@ -38,21 +41,15 @@ async function navigate(page: string) {
 }
 it("starts with actionable help and does not automatically save a query", async () => {
   render(<Dashboard />);
-  fireEvent.click(
-    screen.getByRole("button", { name: "serendipity" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "serendipity" }));
   await screen.findByText("우연한 발견");
   expect(localStorage.getItem(VOCABULARY_KEY)).toBeNull();
   expect(screen.getByRole("link", { name: /읽기 화면에서 연습/ })).toBeTruthy();
 });
 it("updates the wordbook immediately after an explicit save, then marks, filters and removes it", async () => {
   render(<Dashboard />);
-  fireEvent.click(
-    screen.getByRole("button", { name: "serendipity" }),
-  );
-  fireEvent.click(
-    await screen.findByRole("button", { name: "단어장에 저장" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "serendipity" }));
+  fireEvent.click(await screen.findByRole("button", { name: "단어장에 저장" }));
   await screen.findByRole("button", { name: "단어장에 저장됨 ✓" });
   await navigate("words");
   expect(

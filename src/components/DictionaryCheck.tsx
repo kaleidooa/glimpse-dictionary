@@ -1,3 +1,5 @@
+import { definitionLabel } from "../lib/definition-labels";
+import { t as tr } from "../lib/i18n";
 import { useState, type FormEvent } from "react";
 import type { Definition } from "../lib/definition-types";
 import { vocabularyClient } from "../lib/vocabulary-client";
@@ -19,7 +21,9 @@ export function DictionaryCheck({
     const query = (sample ?? word).trim();
     if (busy || saving) return;
     if (!/^[A-Za-z]+(?:['’\-][A-Za-z]+)*$/.test(query) || query.length > 80) {
-      setError("영어 단어 하나를 입력해 주세요.");
+      setError(
+        tr("Enter one English word.", "영어 단어 하나를 입력해 주세요."),
+      );
       return;
     }
     if (sample) setWord(sample);
@@ -32,7 +36,12 @@ export function DictionaryCheck({
       setResult(await lookup(query));
       setElapsed(Math.round(performance.now() - started));
     } catch {
-      setError("사전을 읽지 못했습니다. 페이지를 새로고침해 주세요.");
+      setError(
+        tr(
+          "Could not read the dictionary. Refresh the page.",
+          "사전을 읽지 못했습니다. 페이지를 새로고침해 주세요.",
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -40,14 +49,19 @@ export function DictionaryCheck({
   return (
     <section
       className="product-panel dictionary-check"
-      aria-label="사전 직접 확인"
+      aria-label={tr("Dictionary lookup", "사전 직접 확인")}
     >
       <span className="eyebrow">51,109 HEADWORDS · OFFLINE</span>
-      <h3>궁금한 단어로 확인하기.</h3>
-      <p>영한 사전은 처음부터 켜져 있어요. 품사와 여러 뜻을 함께 확인하세요.</p>
+      <h3>{tr("Try a word.", "궁금한 단어로 확인하기.")}</h3>
+      <p>
+        {tr(
+          "The offline English-to-Korean dictionary is ready. Results include parts of speech and multiple senses.",
+          "영한 사전은 처음부터 켜져 있어요. 품사와 여러 뜻을 함께 확인하세요.",
+        )}
+      </p>
       <form onSubmit={search}>
         <input
-          aria-label="확인할 영어 단어"
+          aria-label={tr("English word to look up", "확인할 영어 단어")}
           value={word}
           maxLength={80}
           autoComplete="off"
@@ -55,7 +69,7 @@ export function DictionaryCheck({
           onChange={(e) => setWord(e.target.value)}
         />
         <button disabled={busy || saving} type="submit">
-          {busy ? "조회 중" : "조회"}
+          {busy ? tr("Looking up…", "조회 중") : tr("Look up", "조회")}
         </button>
       </form>
       <div className="dictionary-examples">
@@ -78,7 +92,7 @@ export function DictionaryCheck({
             <strong>{result.word}</strong>
             {result.matchedBy === "inflection" && (
               <small>
-                원형:{" "}
+                {tr("Base form:", "원형:")}{" "}
                 {(result.lemmas ?? [result.lemma])
                   .filter(
                     (item) => item?.toLowerCase() !== result.word.toLowerCase(),
@@ -90,7 +104,9 @@ export function DictionaryCheck({
               <ol>
                 {result.senses.map((sense, i) => (
                   <li key={i}>
-                    {sense.partOfSpeech && <small>{sense.partOfSpeech} </small>}
+                    {definitionLabel(sense.partOfSpeech) && (
+                      <small>{definitionLabel(sense.partOfSpeech)} </small>
+                    )}
                     {sense.meaning}
                   </li>
                 ))}
@@ -99,12 +115,17 @@ export function DictionaryCheck({
               <p>{result.meaning}</p>
             )}
             <small>
-              {result.source} · {elapsed}ms · {result.license}
+              {definitionLabel(result.source)} · {elapsed}ms · {result.license}
             </small>
             {(
               result.sourceLinks ??
               (result.sourceUrl
-                ? [{ label: "사전 출처", url: result.sourceUrl }]
+                ? [
+                    {
+                      label: tr("Dictionary source", "사전 출처"),
+                      url: result.sourceUrl,
+                    },
+                  ]
                 : [])
             ).map((link) => (
               <a
@@ -113,7 +134,7 @@ export function DictionaryCheck({
                 target="_blank"
                 rel="noreferrer noopener"
               >
-                {link.label} 출처 ↗
+                {link.label} {tr("source ↗", "출처 ↗")}{" "}
               </a>
             ))}
             {result.status === "found" && (
@@ -130,7 +151,10 @@ export function DictionaryCheck({
                       setError(
                         error instanceof Error
                           ? error.message
-                          : "저장하지 못했습니다.",
+                          : tr(
+                              "Could not save the word.",
+                              "저장하지 못했습니다.",
+                            ),
                       );
                     } finally {
                       setSaving(false);
@@ -138,13 +162,15 @@ export function DictionaryCheck({
                   }}
                 >
                   {saved
-                    ? "단어장에 저장됨 ✓"
+                    ? tr("Word saved ✓", "단어장에 저장됨 ✓")
                     : saving
-                      ? "저장 중…"
-                      : "단어장에 저장"}
+                      ? tr("Saving…", "저장 중…")
+                      : tr("Save word", "단어장에 저장")}
                 </button>
                 {saved && (
-                  <a href="./dashboard.html#words">내 단어장 열기 ↗</a>
+                  <a href="./dashboard.html#words">
+                    {tr("Open my words ↗", "내 단어장 열기 ↗")}
+                  </a>
                 )}
               </>
             )}

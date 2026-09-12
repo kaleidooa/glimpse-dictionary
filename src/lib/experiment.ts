@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import {
   median,
   type Candidate,
@@ -128,7 +129,10 @@ export function deleteExperimentData(): string | null {
     localStorage.removeItem(STORAGE_KEY);
     return null;
   } catch {
-    return "기록을 지우지 못했습니다. 브라우저의 사이트 데이터 설정을 확인해 주세요.";
+    return tr(
+      "Could not clear records. Check the browser site-data settings.",
+      "기록을 지우지 못했습니다. 브라우저의 사이트 데이터 설정을 확인해 주세요.",
+    );
   }
 }
 export function loadData(): { data: ExperimentData; error: string | null } {
@@ -147,8 +151,10 @@ export function loadData(): { data: ExperimentData; error: string | null } {
   } catch {
     return {
       data: empty,
-      error:
+      error: tr(
+        "Could not read earlier records. New records will stay in memory; use export to keep them.",
         "이전 기록을 읽지 못했습니다. 이번 기록은 메모리에 보관됩니다. 내보내기를 이용해 주세요.",
+      ),
     };
   }
 }
@@ -157,7 +163,10 @@ export function saveData(data: ExperimentData): string | null {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return null;
   } catch {
-    return "브라우저 저장 공간이 부족하거나 사용할 수 없습니다. 이번 기록을 잃지 않도록 내보내기를 해 주세요.";
+    return tr(
+      "Browser storage is unavailable or full. Export this run so you do not lose its records.",
+      "브라우저 저장 공간이 부족하거나 사용할 수 없습니다. 이번 기록을 잃지 않도록 내보내기를 해 주세요.",
+    );
   }
 }
 export function toCsv(logs: TriggerLog[]): string {

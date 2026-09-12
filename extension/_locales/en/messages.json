@@ -1,0 +1,11 @@
+{
+  "extensionName": {
+    "message": "Glimpse — English-to-Korean Dictionary"
+  },
+  "extensionDescription": {
+    "message": "Look up English words in Korean with a pointer and shortcut. Offline dictionary and a local wordbook."
+  },
+  "lookupCommand": {
+    "message": "Look up the English word under the pointer"
+  }
+}

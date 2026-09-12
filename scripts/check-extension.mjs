@@ -34,7 +34,20 @@ required.push(
   "lab/favicon.png",
   "LICENSE.txt",
   "PRIVACY.txt",
+  "privacy.ko.html",
+  "_locales/en/messages.json",
+  "_locales/ko/messages.json",
 );
+if (manifest.default_locale !== "en")
+  throw new Error("Default locale must be English");
+for (const locale of ["en", "ko"]) {
+  const messages = JSON.parse(
+    await readFile(resolve(root, "_locales", locale, "messages.json"), "utf8"),
+  );
+  for (const key of ["extensionName", "extensionDescription", "lookupCommand"])
+    if (!messages[key]?.message)
+      throw new Error("Missing manifest translation: " + locale + "/" + key);
+}
 for (const source of ["wiktionary", "kengdic"])
   for (const letter of "abcdefghijklmnopqrstuvwxyz")
     required.push(`lab/dictionary/${source}/${letter}.json`);

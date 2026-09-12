@@ -1,3 +1,4 @@
+import { t as tr } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Camera, CameraOff } from "lucide-react";
 import { WebcamTracker, type FeatureFrame } from "../lib/tracker";
@@ -65,7 +66,14 @@ export function CameraPanel({
         fail,
       );
     } catch (e) {
-      fail(e instanceof Error ? e.message : "카메라를 연결하지 못했습니다.");
+      fail(
+        e instanceof Error
+          ? e.message
+          : tr(
+              "Could not connect the camera.",
+              "카메라를 연결하지 못했습니다.",
+            ),
+      );
     }
   };
   return (
@@ -76,15 +84,15 @@ export function CameraPanel({
           autoPlay
           muted
           playsInline
-          aria-label="웹캠 미리보기"
+          aria-label={tr("Webcam preview", "웹캠 미리보기")}
         />
         {(status === "off" || status === "error" || status === "loading") && (
           <div className="camera-placeholder">
             <CameraOff size={24} />
             <span>
               {status === "loading"
-                ? "카메라와 모델 준비 중…"
-                : "시선이 시작되는 곳"}
+                ? tr("Preparing camera and model…", "카메라와 모델 준비 중…")
+                : tr("Webcam", "시선이 시작되는 곳")}
             </span>
           </div>
         )}
@@ -97,8 +105,8 @@ export function CameraPanel({
               off: "CAMERA OFF",
               loading: "CONNECTING",
               tracking: "FACE DETECTED",
-              lost: "눈을 찾는 중",
-              error: "연결 확인",
+              lost: tr("Looking for eyes", "눈을 찾는 중"),
+              error: tr("Check connection", "연결 확인"),
             }[status]
           }
         </span>
@@ -110,20 +118,29 @@ export function CameraPanel({
       )}
       {waiting && (
         <p className="muted" role="status">
-          브라우저의 카메라 권한 요청을 확인해 주세요. 이미 허용했다면 모델
-          준비를 잠시 기다려 주세요.
+          {tr(
+            "Check the browser camera permission prompt. If already allowed, wait for the model to load.",
+            "브라우저의 카메라 권한 요청을 확인해 주세요. 이미 허용했다면 모델 준비를 잠시 기다려 주세요.",
+          )}{" "}
         </p>
       )}
       {status === "off" || status === "error" ? (
         <button className="primary full" onClick={start} disabled={!enabled}>
-          <Camera size={14} /> 웹캠 연결
+          <Camera size={14} /> {tr("Connect webcam", "웹캠 연결")}{" "}
         </button>
       ) : (
         <button className="full" onClick={stop}>
-          {status === "loading" ? "연결 취소" : "카메라 끄기"}
+          {status === "loading"
+            ? tr("Cancel connection", "연결 취소")
+            : tr("Disconnect camera", "카메라 끄기")}
         </button>
       )}
-      <p className="privacy-note">영상은 이 브라우저에서만 처리됩니다.</p>
+      <p className="privacy-note">
+        {tr(
+          "Frames are processed in this browser only.",
+          "영상은 이 브라우저에서만 처리됩니다.",
+        )}
+      </p>
     </>
   );
 }

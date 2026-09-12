@@ -1,4 +1,5 @@
-﻿import type { Definition, DefinitionProvider } from "./definition-types";
+import { t as tr } from "./i18n";
+import type { Definition, DefinitionProvider } from "./definition-types";
 import { localLexicon } from "./local-lexicon";
 import { unavailable, type LocalLookup } from "../../extension/dictionary";
 import { validWord } from "./morphology";
@@ -53,7 +54,10 @@ export class BrowserDefinitionProvider implements DefinitionProvider {
               word,
               meaning: data.meaning,
               language: "ko",
-              source: "OpenAI · 실험용 문맥 해석",
+              source: tr(
+                "OpenAI · experimental contextual definition",
+                "OpenAI · 실험용 문맥 해석",
+              ),
               status: "found",
             };
             this.cache.set(cacheKey, result);

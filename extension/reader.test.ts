@@ -1,4 +1,7 @@
 // @vitest-environment jsdom
+import { beforeEach as beforeLanguageTest } from "vitest";
+import { applyLocale } from "../src/lib/i18n";
+beforeLanguageTest(() => applyLocale("ko"));
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { installReader } from "./reader";
 import type { Definition } from "../src/lib/definitions";
@@ -102,12 +105,10 @@ it("does not reopen or overwrite with a late network response", async () => {
   expect(root.textContent).not.toContain("STALE RESULT");
 });
 it("uses text content for untrusted definitions and removes listeners on disposal", async () => {
-  const lookup = vi
-    .fn()
-    .mockResolvedValue({
-      ...response,
-      meaning: "<img src=x onerror=alert(1)>",
-    });
+  const lookup = vi.fn().mockResolvedValue({
+    ...response,
+    meaning: "<img src=x onerror=alert(1)>",
+  });
   reader = installReader(lookup);
   point();
   await reader.trigger();

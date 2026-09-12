@@ -1,3 +1,4 @@
+import { t as tr } from "./lib/i18n";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
@@ -13,8 +14,10 @@ import { DictionaryCheck } from "./components/DictionaryCheck";
 import { vocabularyClient } from "./lib/vocabulary-client";
 import { VERSION } from "./lib/product";
 import "./product.css";
+import { LanguageSelect, useLocale } from "./components/LanguageSelect";
 const Lab = lazy(() => import("./LabApp"));
 export default function App() {
+  useLocale();
   const [lab, setLab] = useState(location.hash === "#lab");
   const [online, setOnline] = useState(false);
   const onlineRef = useRef(online);
@@ -63,18 +66,28 @@ export default function App() {
     return (
       <>
         <div className="lab-return">
+          <LanguageSelect />
           <button
             onClick={() => {
               setLab(false);
               history.replaceState(null, "", location.pathname);
             }}
           >
-            ← 커서 사전으로 돌아가기
+            {tr("← Back to dictionary", "← 커서 사전으로 돌아가기")}{" "}
           </button>
-          <span>실험실 BETA · 웹캠을 직접 연결해야 시작합니다</span>
+          <span>
+            {tr(
+              "Eye lab BETA · Connect a webcam to start",
+              "실험실 BETA · 웹캠을 직접 연결해야 시작합니다",
+            )}
+          </span>
         </div>
         <Suspense
-          fallback={<p className="loading-lab">실험실을 열고 있어요…</p>}
+          fallback={
+            <p className="loading-lab">
+              {tr("Opening the lab…", "실험실을 열고 있어요…")}
+            </p>
+          }
         >
           <Lab />
         </Suspense>
@@ -86,14 +99,15 @@ export default function App() {
         <a href="./index.html" className="product-brand">
           glimpse<span>.</span>
         </a>
-        <a href="./dashboard.html#words">내 단어장</a>
+        <a href="./dashboard.html#words">{tr("My words", "내 단어장")}</a>
+        <LanguageSelect />
         <button
           onClick={() => {
             setLab(true);
             history.replaceState(null, "", "#lab");
           }}
         >
-          <FlaskConical size={15} /> 실험실 <b>BETA</b>
+          <FlaskConical size={15} /> {tr("Lab", "실험실")} <b>BETA</b>
         </button>
       </header>
       <main className="product-main">
@@ -101,19 +115,24 @@ export default function App() {
           <div>
             <div className="eyebrow">KEEP YOUR PLACE. FIND THE MEANING.</div>
             <h1>
-              읽던 자리에서,
-              <br />
-              <em>바로 이해하기.</em>
+              {tr("Keep your place.", "읽던 자리에서,")} <br />
+              <em>{tr("Find the meaning.", "바로 이해하기.")}</em>
             </h1>
             <p>
-              모르는 영어 단어에 커서를 두고 단축키를 누르세요.
+              {tr(
+                "Point at an unfamiliar English word and press the shortcut.",
+                "모르는 영어 단어에 커서를 두고 단축키를 누르세요.",
+              )}{" "}
               <br />
-              뜻은 단어 옆에, 읽는 흐름은 그대로.
+              {tr(
+                "The definition appears beside the word.",
+                "뜻은 단어 옆에, 읽는 흐름은 그대로.",
+              )}{" "}
             </p>
           </div>
           <div className="shortcut-card">
             <MousePointer2 size={23} />
-            <span>단어에 커서 두기</span>
+            <span>{tr("Point at a word", "단어에 커서 두기")}</span>
             <div>
               <kbd>Alt</kbd>
               <i>+</i>
@@ -121,7 +140,12 @@ export default function App() {
               <i>+</i>
               <kbd>D</kbd>
             </div>
-            <small>드래그 없이 · 검색창 없이</small>
+            <small>
+              {tr(
+                "No selection or search box needed",
+                "드래그 없이 · 검색창 없이",
+              )}
+            </small>
           </div>
         </section>
         <div className="product-columns">
@@ -129,7 +153,7 @@ export default function App() {
             <div className="reader-kicker">
               <BookOpen size={15} />
               <span>TRY IT HERE</span>
-              <span>약 1분 읽기</span>
+              <span>{tr("1 min read", "약 1분 읽기")}</span>
             </div>
             <h2>The quiet art of curiosity</h2>
             <p className="reader-deck">
@@ -141,7 +165,8 @@ export default function App() {
               </p>
             ))}
             <div className="reader-bottom">
-              단어 위에서 <strong>Alt + Shift + D</strong> · 닫기{" "}
+              {tr("Point and press", "단어 위에서")}{" "}
+              <strong>Alt + Shift + D</strong> {tr("· Close with", "· 닫기")}{" "}
               <strong>Esc</strong>
               <ArrowUpRight size={17} />
             </div>
@@ -151,10 +176,12 @@ export default function App() {
               <div className="panel-icon">
                 <ShieldCheck size={19} />
               </div>
-              <h3>기본은, 기기 안에서.</h3>
+              <h3>{tr("Works on your device.", "기본은, 기기 안에서.")}</h3>
               <p>
-                카메라를 켜지 않습니다. 일반 조회의 단어·본문·방문 기록을
-                저장하지 않습니다.
+                {tr(
+                  "No camera needed. Lookups do not save words, page content or browsing history.",
+                  "카메라를 켜지 않습니다. 일반 조회의 단어·본문·방문 기록을 저장하지 않습니다.",
+                )}{" "}
               </p>
               <div className="quiet-rule" />
               {!packaged ? (
@@ -165,18 +192,26 @@ export default function App() {
                       checked={online}
                       onChange={(e) => setOnline(e.target.checked)}
                     />
-                    <span>보조 영영 사전 사용</span>
+                    <span>
+                      {tr(
+                        "Use online English dictionary",
+                        "보조 영영 사전 사용",
+                      )}
+                    </span>
                   </label>
                   <small>
-                    기기 영한 사전에 없는 단어만 dictionaryapi.dev로 전송합니다.
-                    문장과 페이지 주소는 보내지 않습니다. 서버에는 IP 주소가
-                    보일 수 있습니다. 이 화면을 닫으면 꺼집니다.
+                    {tr(
+                      "Only words missing from the local dictionary go to dictionaryapi.dev. Sentences and page URLs are omitted. The server can see your IP address. This option resets when you close the page.",
+                      "기기 영한 사전에 없는 단어만 dictionaryapi.dev로 전송합니다. 문장과 페이지 주소는 보내지 않습니다. 서버에는 IP 주소가 보일 수 있습니다. 이 화면을 닫으면 꺼집니다.",
+                    )}{" "}
                   </small>
                 </>
               ) : (
                 <small>
-                  보조 영영 사전 사용 여부는 Chrome 확장 설정에서 바꿀 수
-                  있습니다.
+                  {tr(
+                    "Manage the online English dictionary in extension settings.",
+                    "보조 영영 사전 사용 여부는 Chrome 확장 설정에서 바꿀 수 있습니다.",
+                  )}{" "}
                 </small>
               )}
             </section>
@@ -189,40 +224,57 @@ export default function App() {
             />
             <section className="product-panel install-panel">
               <span className="eyebrow">BEYOND THIS PAGE</span>
-              <h3>읽는 웹사이트에서도.</h3>
+              <h3>{tr("Use it on other websites.", "읽는 웹사이트에서도.")}</h3>
               <p>
-                Chrome 확장을 설치하면 뉴스, 블로그, 문서의 영어 텍스트에도 같은
-                단축키를 쓸 수 있어요.
+                {tr(
+                  "Install the Chrome extension to use the shortcut in articles, blogs and documentation.",
+                  "Chrome 확장을 설치하면 뉴스, 블로그, 문서의 영어 텍스트에도 같은 단축키를 쓸 수 있어요.",
+                )}{" "}
               </p>
               <ol>
                 <li>
-                  <code>chrome://extensions</code> 열기
+                  {tr("Open extension settings:", "확장 관리 화면 열기:")}{" "}
+                  <code>chrome://extensions</code>
                 </li>
-                <li>개발자 모드 켜기</li>
+                <li>{tr("Enable Developer mode", "개발자 모드 켜기")}</li>
                 <li>
-                  ‘압축해제된 확장 프로그램 로드’에서{" "}
-                  <code>dist-extension</code> 선택
+                  {tr(
+                    "In “Load unpacked”, choose",
+                    "‘압축해제된 확장 프로그램 로드’에서",
+                  )}{" "}
+                  <code>dist-extension</code> {tr("as the folder", "선택")}{" "}
                 </li>
-                <li>확장 아이콘에서 사이트 사용 켜기</li>
+                <li>
+                  {tr(
+                    "Enable the site from the extension popup",
+                    "확장 아이콘에서 사이트 사용 켜기",
+                  )}
+                </li>
               </ol>
               <small>
-                Chrome 내부 페이지, 웹 스토어, PDF 뷰어, 이미지 속 글자는
-                지원하지 않습니다.
+                {tr(
+                  "Chrome internal pages, the Web Store, PDF viewers and text in images are unsupported.",
+                  "Chrome 내부 페이지, 웹 스토어, PDF 뷰어, 이미지 속 글자는 지원하지 않습니다.",
+                )}{" "}
               </small>
             </section>
             <section className="lab-preview">
               <div>
                 <FlaskConical size={18} />
-                <b>시선 추적</b>
+                <b>{tr("Eye tracking", "시선 추적")}</b>
                 <span>BETA</span>
               </div>
               <p>
-                웹캠 보정, 스크롤 평가, 반복 학습을 위한 실험실입니다. 정확도는
-                환경에 따라 달라집니다.
+                {tr(
+                  "An experimental lab for webcam calibration, scrolling trials and additional training. Accuracy depends on your setup.",
+                  "웹캠 보정, 스크롤 평가, 반복 학습을 위한 실험실입니다. 정확도는 환경에 따라 달라집니다.",
+                )}{" "}
               </p>
               <small>
-                실험실에서는 시선 특징과 실험 기록이 이 브라우저에 저장됩니다.
-                카메라 영상은 전송·저장하지 않습니다.
+                {tr(
+                  "The lab saves gaze features and experiment records in this browser. Camera frames are not saved or sent anywhere.",
+                  "실험실에서는 시선 특징과 실험 기록이 이 브라우저에 저장됩니다. 카메라 영상은 전송·저장하지 않습니다.",
+                )}{" "}
               </small>
               <button
                 onClick={() => {
@@ -230,7 +282,7 @@ export default function App() {
                   history.replaceState(null, "", "#lab");
                 }}
               >
-                실험실 열기 <ArrowUpRight size={15} />
+                {tr("Open lab", "실험실 열기")} <ArrowUpRight size={15} />
               </button>
             </section>
           </aside>

@@ -1,3 +1,4 @@
+import { t as tr } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Check, Crosshair, X, ArrowRight } from "lucide-react";
 import {
@@ -101,7 +102,7 @@ export function Calibration({
   useEffect(() => {
     if (phase !== "training" && phase !== "validation") return;
     setProgress(0);
-    setMessage("점을 바라보세요");
+    setMessage(tr("Look at the point", "점을 바라보세요"));
     setFailed(false);
     const target = (
       phase === "training" ? points.current : validationTargets.current
@@ -129,10 +130,16 @@ export function Calibration({
       }
       setMessage(
         !valid
-          ? "눈이 잘 보이도록 정면을 향해 주세요"
+          ? tr(
+              "Face the camera so your eyes are visible",
+              "눈이 잘 보이도록 정면을 향해 주세요",
+            )
           : elapsed < 750
-            ? "점에 시선을 옮기세요"
-            : "좋아요. 조금만 더 바라보세요",
+            ? tr("Move your gaze to the point", "점에 시선을 옮기세요")
+            : tr(
+                "Keep looking a little longer",
+                "좋아요. 조금만 더 바라보세요",
+              ),
       );
       setProgress(
         Math.min(
@@ -145,7 +152,12 @@ export function Calibration({
         const cleaned = cleanCalibrationRows(collected);
         if (cleaned.length < 10) {
           setFailed(true);
-          setMessage("시선이 불안정했습니다. 이 점을 다시 측정해 주세요.");
+          setMessage(
+            tr(
+              "Gaze was unstable. Please measure this point again.",
+              "시선이 불안정했습니다. 이 점을 다시 측정해 주세요.",
+            ),
+          );
           return;
         }
         if (phase === "training") {
@@ -189,7 +201,10 @@ export function Calibration({
         clearInterval(interval);
         setFailed(true);
         setMessage(
-          "유효한 눈 데이터가 부족합니다. 카메라와 조명을 확인하고 다시 시도하세요.",
+          tr(
+            "Not enough valid eye data. Check the camera and lighting, then retry.",
+            "유효한 눈 데이터가 부족합니다. 카메라와 조명을 확인하고 다시 시도하세요.",
+          ),
         );
       }
     }, 40);
@@ -221,7 +236,7 @@ export function Calibration({
       className="calibration-screen"
       role="dialog"
       aria-modal="true"
-      aria-label="시선 보정"
+      aria-label={tr("Gaze calibration", "시선 보정")}
       onKeyDown={(e) => {
         if (e.key === "Tab") {
           const items = e.currentTarget.querySelectorAll<HTMLButtonElement>(
@@ -243,7 +258,11 @@ export function Calibration({
         <span>
           <Crosshair size={18} /> GLIMPSE / CALIBRATION
         </span>
-        <button ref={closeButton} onClick={onClose} aria-label="보정 닫기">
+        <button
+          ref={closeButton}
+          onClick={onClose}
+          aria-label={tr("Close calibration", "보정 닫기")}
+        >
           <X size={18} />
         </button>
       </div>
@@ -253,33 +272,56 @@ export function Calibration({
             <Crosshair size={34} />
           </div>
           <div className="eyebrow">LET’S FIND YOUR POINT OF VIEW</div>
-          <h2>화면의 점을 따라 바라보세요.</h2>
+          <h2>
+            {tr(
+              "Follow the points on the screen.",
+              "화면의 점을 따라 바라보세요.",
+            )}
+          </h2>
           <p>
-            머리는 편안하게 고정하고, 눈으로만 점을 따라갑니다.
+            {tr(
+              "Keep your head still and follow each point with your eyes.",
+              "머리는 편안하게 고정하고, 눈으로만 점을 따라갑니다.",
+            )}{" "}
             <br />
             {precision
-              ? "25개 위치를 두 번씩 측정하고, 새로운 9개 점으로 확인합니다."
-              : "9개의 점으로 보정한 뒤, 새로운 5개 점으로 확인합니다."}
+              ? tr(
+                  "Measure 25 positions twice, then validate with 9 new points.",
+                  "25개 위치를 두 번씩 측정하고, 새로운 9개 점으로 확인합니다.",
+                )
+              : tr(
+                  "Calibrate at 9 points, then validate with 5 new points.",
+                  "9개의 점으로 보정한 뒤, 새로운 5개 점으로 확인합니다.",
+                )}
             <br />
-            {precision ? "약 2분" : "약 30초"}가 걸립니다. 클릭하거나 Space를
-            누를 필요는 없어요.
+            {precision
+              ? tr("About 2 minutes", "약 2분")
+              : tr("About 30 seconds", "약 30초")}
+            {tr(
+              ". No clicks or Space presses needed.",
+              "가 걸립니다. 클릭하거나 Space를 누를 필요는 없어요.",
+            )}{" "}
           </p>
           <div className="calibration-options">
             <button aria-pressed={precision} onClick={() => setPrecision(true)}>
-              정밀 · 25점 × 2회
+              {tr("Precise · 25 points × 2", "정밀 · 25점 × 2회")}{" "}
             </button>
             <button
               aria-pressed={!precision}
               onClick={() => setPrecision(false)}
             >
-              빠른 보정 · 9점
+              {tr("Quick · 9 points", "빠른 보정 · 9점")}{" "}
             </button>
           </div>
           <button className="primary" onClick={begin}>
-            {precision ? "50회" : "9점"} 보정 시작 <ArrowRight size={15} />
+            {precision ? tr("50 samples", "50회") : tr("9 points", "9점")}{" "}
+            {tr("Start calibration", "보정 시작")} <ArrowRight size={15} />
           </button>
           <small>
-            안경 반사와 역광을 피하고, 얼굴 전체가 보이도록 앉아 주세요.
+            {tr(
+              "Avoid glare and backlighting. Keep your whole face in view.",
+              "안경 반사와 역광을 피하고, 얼굴 전체가 보이도록 앉아 주세요.",
+            )}{" "}
           </small>
         </div>
       ) : phase === "done" ? (
@@ -288,32 +330,49 @@ export function Calibration({
             <Check size={30} />
           </div>
           <div className="eyebrow">VALIDATION COMPLETE</div>
-          <h2>시선 보정이 끝났어요.</h2>
+          <h2>{tr("Calibration complete.", "시선 보정이 끝났어요.")}</h2>
           <div className="validation-value">
             {Math.round(average)}
             <span> px</span>
           </div>
           <p>
-            새로운 {validation.length}개 지점에서 측정한 평균 오차
+            {tr(
+              "Average error across {0} new validation points",
+              "새로운 {0}개 지점에서 측정한 평균 오차",
+              validation.length,
+            )}{" "}
             <br />
             {average > 100
-              ? "오차가 큽니다. 조명과 자세를 조정한 뒤 다시 보정하는 것을 권장합니다."
-              : "이제 읽기 실험에서 실제 단어 정확도를 측정해 보세요."}
+              ? tr(
+                  "Error is high. Adjust your lighting and posture, then recalibrate.",
+                  "오차가 큽니다. 조명과 자세를 조정한 뒤 다시 보정하는 것을 권장합니다.",
+                )
+              : tr(
+                  "Try a reading experiment to measure word accuracy.",
+                  "이제 읽기 실험에서 실제 단어 정확도를 측정해 보세요.",
+                )}
           </p>
           <div className="validation-points">
             {validation.map((v, i) => (
               <span key={i}>
-                지점 {i + 1}
+                {tr("points", "지점")} {i + 1}
                 <b>{Math.round(v.pixelError ?? 0)} px</b>
               </span>
             ))}
           </div>
           <p className="model-detail">
-            {model.current?.featureMode === "quadratic" ? "2차" : "선형"} 회귀 ·
-            위치를 분리한 {selection.current?.folds}겹 검증으로 선택
-            <br />
-            학습 위치 검증 {Math.round(selection.current?.meanError ?? 0)} px ·
-            최종 점들은 학습에 사용하지 않았습니다.
+            {model.current?.featureMode === "quadratic"
+              ? tr("Quadratic", "2차")
+              : tr("Linear", "선형")}{" "}
+            {tr("regression · selected using", "회귀 · 위치를 분리한")}{" "}
+            {selection.current?.folds}
+            {tr("-fold validation by position", "겹 검증으로 선택")} <br />
+            {tr("Training-position validation", "학습 위치 검증")}{" "}
+            {Math.round(selection.current?.meanError ?? 0)}{" "}
+            {tr(
+              "px · Final validation points were not used for fitting.",
+              "px · 최종 점들은 학습에 사용하지 않았습니다.",
+            )}{" "}
           </p>
           <div className="button-row">
             <button
@@ -324,7 +383,7 @@ export function Calibration({
                 setPhase("intro");
               }}
             >
-              다시 보정
+              {tr("Recalibrate", "다시 보정")}{" "}
             </button>
             <button
               className="primary"
@@ -332,12 +391,15 @@ export function Calibration({
                 if (record.current) onDone(record.current);
               }}
             >
-              읽기로 돌아가기 <ArrowRight size={14} />
+              {tr("Back to reading", "읽기로 돌아가기")}{" "}
+              <ArrowRight size={14} />
             </button>
           </div>
           <small>
-            웹캠 단어 정확도를 보장하는 수치가 아닙니다. Test Mode에서
-            검증하세요.
+            {tr(
+              "This does not establish webcam word accuracy. Check it in Test Mode.",
+              "웹캠 단어 정확도를 보장하는 수치가 아닙니다. Test Mode에서 검증하세요.",
+            )}{" "}
           </small>
         </div>
       ) : (
@@ -361,7 +423,9 @@ export function Calibration({
                 : "INDEPENDENT VALIDATION"}
             </span>
             <h3>
-              {phase === "training" ? "시선 보정" : "보정 결과 확인"}{" "}
+              {phase === "training"
+                ? tr("Gaze calibration", "시선 보정")
+                : tr("Check calibration", "보정 결과 확인")}{" "}
               <span>
                 {index + 1} /{" "}
                 {phase === "training"
@@ -378,14 +442,14 @@ export function Calibration({
                   setRetry(retry + 1);
                 }}
               >
-                이 단계 다시 시도
+                {tr("Retry this step", "이 단계 다시 시도")}{" "}
               </button>
             )}
           </div>
           <div
             className="calibration-target"
             style={{ left: target.x, top: target.y }}
-            aria-label={`보정 지점 ${index + 1}`}
+            aria-label={tr("Calibration point {0}", "보정 지점 {0}", index + 1)}
           >
             <div
               style={{
@@ -397,9 +461,15 @@ export function Calibration({
           </div>
           <div className="calibration-bottom">
             {phase === "validation"
-              ? "학습에 사용하지 않은 새 지점입니다."
-              : "점이 옮겨질 때까지 계속 바라보세요."}{" "}
-            <span>Esc로 취소</span>
+              ? tr(
+                  "This is a new point, excluded from training.",
+                  "학습에 사용하지 않은 새 지점입니다.",
+                )
+              : tr(
+                  "Keep looking until the point moves.",
+                  "점이 옮겨질 때까지 계속 바라보세요.",
+                )}{" "}
+            <span>{tr("Esc to cancel", "Esc로 취소")}</span>
           </div>
         </>
       )}

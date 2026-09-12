@@ -1,28 +1,26 @@
-name: 동작 문제 / Bug report
-description: 단어 탐지, 스크롤, 단축키 또는 단어장 문제를 알려 주세요.
+name: Bug report
+description: Report a problem with lookup, shortcuts, scrolling or saved words.
 body:
-  - type: markdown
-    attributes:
-      value: 비공개 URL, 문장, 단어장 백업이나 시선 기록은 첨부하지 않아도 됩니다. 보안 취약점은 SECURITY.md를 확인하세요.
   - type: input
     id: version
     attributes:
-      label: Glimpse 버전 / Version
+      label: Glimpse version
     validations:
       required: true
   - type: input
     id: browser
     attributes:
-      label: 브라우저와 운영체제 / Browser and OS
+      label: Browser and operating system
   - type: textarea
     id: steps
     attributes:
-      label: 재현 순서 / Steps to reproduce
+      label: Steps to reproduce
+      description: A small public example helps. Private URLs or browsing content are not needed.
     validations:
       required: true
   - type: textarea
-    id: expected
+    id: result
     attributes:
-      label: 기대한 결과와 실제 결과 / Expected and actual result
+      label: Expected and actual result
     validations:
       required: true

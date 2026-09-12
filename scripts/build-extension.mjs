@@ -56,6 +56,10 @@ await build({
 for (const name of ["manifest.json", "popup.html", "popup.css"])
   await copyFile(`extension/${name}`, resolve(outDir, name));
 await writeFile(resolve(outDir, "privacy.html"), await renderPolicy());
+await writeFile(resolve(outDir, "privacy.ko.html"), await renderPolicy("ko"));
+await cp("extension/_locales", resolve(outDir, "_locales"), {
+  recursive: true,
+});
 await cp("extension/icons", resolve(outDir, "icons"), { recursive: true });
 const thirdParty = [];
 for (const [name, path] of [
@@ -87,18 +91,16 @@ await writeFile(
   resolve(outDir, "THIRD-PARTY-NOTICES.txt"),
   thirdParty.join("\n\n"),
 );
-await copyFile("EXTENSION.md", resolve(outDir, "INSTALL.txt"));
-await copyFile("EXTENSION-VALIDATION.md", resolve(outDir, "VALIDATION.txt"));
-await copyFile(
-  "DICTIONARY-DESIGN.md",
-  resolve(outDir, "DICTIONARY-DESIGN.txt"),
-);
+await copyFile("README.md", resolve(outDir, "INSTALL.txt"));
+await copyFile("docs/ko/README.md", resolve(outDir, "INSTALL.ko.txt"));
+await copyFile("docs/DEVELOPMENT.md", resolve(outDir, "DEVELOPMENT.txt"));
 await copyFile("LICENSE", resolve(outDir, "LICENSE.txt"));
 await copyFile("PRIVACY.md", resolve(outDir, "PRIVACY.txt"));
+await copyFile("docs/ko/PRIVACY.md", resolve(outDir, "PRIVACY.ko.txt"));
 await writeFile(
   resolve(outDir, "BUILD.txt"),
   `Glimpse ${JSON.parse(await readFile("package.json", "utf8")).version}\nBuilt ${new Date().toISOString()}\nLocal unpacked extension; not published to the Chrome Web Store.\n`,
 );
 console.log(
-  `\nChrome → chrome://extensions → 개발자 모드 → 압축해제된 확장 프로그램 로드 → ${outDir}`,
+  `\nChrome → chrome://extensions → Developer mode → Load unpacked → ${outDir}`,
 );

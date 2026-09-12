@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { extractFeatures, type EyeFeatures } from "./features";
 export type FeatureFrame = EyeFeatures & { timestamp: number };
@@ -12,7 +13,12 @@ export class WebcamTracker {
     onError: (message: string) => void,
   ) {
     if (!navigator.mediaDevices?.getUserMedia)
-      throw new Error("카메라는 localhost 또는 HTTPS에서 사용할 수 있습니다.");
+      throw new Error(
+        tr(
+          "The camera requires localhost or HTTPS.",
+          "카메라는 localhost 또는 HTTPS에서 사용할 수 있습니다.",
+        ),
+      );
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -75,7 +81,12 @@ export class WebcamTracker {
       this.stream.getVideoTracks()[0]?.addEventListener("ended", () => {
         if (!this.stopped) {
           this.stop();
-          onError("카메라 연결이 종료되었습니다. 다시 연결해 주세요.");
+          onError(
+            tr(
+              "Camera connection ended. Please reconnect.",
+              "카메라 연결이 종료되었습니다. 다시 연결해 주세요.",
+            ),
+          );
         }
       });
       let lastTime = -1,
@@ -108,7 +119,12 @@ export class WebcamTracker {
             onFrame(features ? { ...features, timestamp: now } : null);
           } catch {
             this.stop();
-            onError("얼굴 분석이 중단되었습니다. 카메라를 다시 연결해 주세요.");
+            onError(
+              tr(
+                "Face analysis stopped. Please reconnect the camera.",
+                "얼굴 분석이 중단되었습니다. 카메라를 다시 연결해 주세요.",
+              ),
+            );
             return;
           }
         }
@@ -120,18 +136,30 @@ export class WebcamTracker {
       const name = error instanceof Error ? error.name : "";
       if (name === "NotAllowedError")
         throw new Error(
-          "카메라 권한이 허용되지 않았습니다. 주소창의 사이트 설정에서 카메라를 허용한 뒤 다시 연결해 주세요.",
+          tr(
+            "Camera access was denied. Allow it in the browser site settings, then reconnect.",
+            "카메라 권한이 허용되지 않았습니다. 주소창의 사이트 설정에서 카메라를 허용한 뒤 다시 연결해 주세요.",
+          ),
         );
       if (name === "NotFoundError")
         throw new Error(
-          "사용 가능한 웹캠이 없습니다. 카메라 연결을 확인하거나 마우스 시뮬레이션을 사용하세요.",
+          tr(
+            "No webcam found. Check the connection or use mouse simulation.",
+            "사용 가능한 웹캠이 없습니다. 카메라 연결을 확인하거나 마우스 시뮬레이션을 사용하세요.",
+          ),
         );
       if (name === "NotReadableError")
         throw new Error(
-          "카메라를 열 수 없습니다. 다른 앱에서 사용 중인지 확인하세요.",
+          tr(
+            "Could not open the camera. Check whether another app is using it.",
+            "카메라를 열 수 없습니다. 다른 앱에서 사용 중인지 확인하세요.",
+          ),
         );
       throw new Error(
-        "모델 또는 카메라를 불러오지 못했습니다. npm run assets 실행 후 다시 연결하세요.",
+        tr(
+          "Could not load the model or camera. Run npm run assets, then reconnect.",
+          "모델 또는 카메라를 불러오지 못했습니다. npm run assets 실행 후 다시 연결하세요.",
+        ),
       );
     }
   }

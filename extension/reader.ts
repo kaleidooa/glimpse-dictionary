@@ -1,3 +1,4 @@
+import { t as tr } from "../src/lib/i18n";
 import { isTypingElement, wordAtPoint } from "./word-at-point";
 import { createOverlay } from "./overlay";
 import type { Definition } from "../src/lib/definitions";
@@ -32,7 +33,10 @@ export function installReader(
   const ready = () =>
     overlay.show(
       null,
-      "사용 준비가 되었습니다. 단어 위로 커서를 옮긴 뒤 단축키를 누르세요.",
+      tr(
+        "Ready. Move the pointer to a word and press the shortcut.",
+        "사용 준비가 되었습니다. 단어 위로 커서를 옮긴 뒤 단축키를 누르세요.",
+      ),
     );
   const trigger = async () => {
     if (document.hidden || !point) return;
@@ -54,9 +58,12 @@ export function installReader(
     } catch {
       update({
         word: hit.word,
-        meaning: "확장을 새로 불러왔다면 이 페이지를 새로고침해 주세요.",
+        meaning: tr(
+          "If you reloaded the extension, refresh this webpage.",
+          "확장을 새로 불러왔다면 이 페이지를 새로고침해 주세요.",
+        ),
         language: "ko",
-        source: "연결 확인 필요",
+        source: tr("Check connection", "연결 확인 필요"),
       });
     }
   };

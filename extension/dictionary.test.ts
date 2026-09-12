@@ -13,23 +13,21 @@ it("uses local Korean results before any optional external lookup", async () => 
   expect(request).not.toHaveBeenCalled();
 });
 it("sends only a missing encoded word without cookies, referrer, cache or redirects", async () => {
-  const request = vi
-    .fn()
-    .mockResolvedValue(
-      new Response(
-        JSON.stringify([
-          {
-            phonetic: "/test/",
-            meanings: [
-              {
-                partOfSpeech: "noun",
-                definitions: [{ definition: "A fortunate discovery." }],
-              },
-            ],
-          },
-        ]),
-      ),
-    );
+  const request = vi.fn().mockResolvedValue(
+    new Response(
+      JSON.stringify([
+        {
+          phonetic: "/test/",
+          meanings: [
+            {
+              partOfSpeech: "noun",
+              definitions: [{ definition: "A fortunate discovery." }],
+            },
+          ],
+        },
+      ]),
+    ),
+  );
   const result = await defineWord("Serendipity", true, request, missing);
   expect(result.meaning).toBe("A fortunate discovery.");
   expect(request).toHaveBeenCalledTimes(1);

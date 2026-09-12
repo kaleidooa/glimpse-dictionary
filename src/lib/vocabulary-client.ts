@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { VocabularyStore, VOCABULARY_KEY, type SavedWord } from "./vocabulary";
 import type { Definition } from "./definition-types";
 const packaged = () => location.protocol === "chrome-extension:";
@@ -17,7 +18,11 @@ async function message<T>(
   const response = await chrome.runtime.sendMessage({ type, ...payload });
   if (!response?.ok)
     throw new Error(
-      response?.error ?? "확장을 업데이트했다면 이 페이지도 새로고침해 주세요.",
+      response?.error ??
+        tr(
+          "If you updated the extension, refresh this page too.",
+          "확장을 업데이트했다면 이 페이지도 새로고침해 주세요.",
+        ),
     );
   return response.value as T;
 }

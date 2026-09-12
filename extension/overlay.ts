@@ -1,5 +1,8 @@
+import { definitionLabel } from "../src/lib/definition-labels";
+import { t as tr } from "../src/lib/i18n";
 import type { Definition } from "../src/lib/definitions";
 import type { Hit } from "./word-at-point";
+import { subscribeLocale } from "../src/lib/i18n";
 
 export function createOverlay(
   save?: (definition: Definition) => Promise<{ created: boolean }>,
@@ -43,16 +46,17 @@ export function createOverlay(
     word.textContent = hit?.word ?? "glimpse.";
     const dismiss = document.createElement("button");
     dismiss.textContent = "×";
-    dismiss.setAttribute("aria-label", "뜻 닫기");
+    dismiss.setAttribute("aria-label", tr("Close definition", "뜻 닫기"));
     dismiss.onclick = close;
     const meaning = document.createElement("p");
-    meaning.textContent = message ?? "뜻을 찾고 있어요…";
+    meaning.textContent =
+      message ?? tr("Looking up the word…", "뜻을 찾고 있어요…");
     const lemma = document.createElement("div");
     lemma.className = "lemma";
     const senses = document.createElement("div");
     senses.className = "senses";
     const source = document.createElement("small");
-    source.textContent = "GLIMPSE · ESC로 닫기";
+    source.textContent = tr("GLIMPSE · ESC to close", "GLIMPSE · ESC로 닫기");
     title.append(word, dismiss);
     card.append(title, lemma, meaning, senses, source);
     if (typeof CSSStyleSheet.prototype.replaceSync === "function") {
@@ -73,7 +77,16 @@ export function createOverlay(
       if (revision !== token || !host?.isConnected) return;
       lemma.textContent = [
         definition.matchedBy === "inflection"
-          ? `원형: ${(definition.lemmas ?? [definition.lemma]).filter((item) => item?.toLowerCase() !== definition.word.toLowerCase()).join(" · ")}`
+          ? tr(
+              "Base form: {0}",
+              "원형: {0}",
+              (definition.lemmas ?? [definition.lemma])
+                .filter(
+                  (item) =>
+                    item?.toLowerCase() !== definition.word.toLowerCase(),
+                )
+                .join(" · "),
+            )
           : "",
         definition.phonetic,
       ]
@@ -94,7 +107,7 @@ export function createOverlay(
             definition.lemmas && definition.lemmas.length > 1
               ? item.headword
               : "",
-            item.partOfSpeech,
+            definitionLabel(item.partOfSpeech),
           ]
             .filter(Boolean)
             .join(" · ");
@@ -105,8 +118,12 @@ export function createOverlay(
           const more = document.createElement("button");
           more.className = "more";
           more.textContent = expanded
-            ? "접기"
-            : `다른 뜻 ${(definition.senses?.length ?? 0) - 3}개 더 보기`;
+            ? tr("Show less", "접기")
+            : tr(
+                "Show {0} more senses",
+                "다른 뜻 {0}개 더 보기",
+                (definition.senses?.length ?? 0) - 3,
+              );
           more.onclick = () => {
             renderSenses(!expanded);
             position();
@@ -115,12 +132,15 @@ export function createOverlay(
         }
       };
       renderSenses(false);
-      source.textContent = [definition.source, definition.license]
+      source.textContent = [
+        definitionLabel(definition.source),
+        definition.license,
+      ]
         .filter(Boolean)
         .join(" · ");
       for (const item of definition.sourceLinks ??
         (definition.sourceUrl
-          ? [{ label: "출처", url: definition.sourceUrl }]
+          ? [{ label: tr("Source", "출처"), url: definition.sourceUrl }]
           : []))
         if (
           /^https:\/\/(ko\.wiktionary\.org|github\.com|dictionaryapi\.dev)\//.test(
@@ -137,26 +157,36 @@ export function createOverlay(
       if (save && definition.status === "found") {
         const button = document.createElement("button");
         button.className = "save";
-        button.textContent = "단어장에 저장";
-        button.title =
-          "이 단어와 뜻만 기기에 저장합니다. 문장과 페이지 주소는 저장하지 않습니다.";
+        button.textContent = tr("Save word", "단어장에 저장");
+        button.title = tr(
+          "Saves this word and its definition on your device, without the sentence or page URL.",
+          "이 단어와 뜻만 기기에 저장합니다. 문장과 페이지 주소는 저장하지 않습니다.",
+        );
         const note = document.createElement("p");
         note.className = "save-note";
         note.setAttribute("role", "status");
         button.onclick = async () => {
           button.disabled = true;
-          button.textContent = "저장 중…";
+          button.textContent = tr("Saving…", "저장 중…");
           try {
             const result = await save(definition);
-            button.textContent = "저장됨 ✓";
+            button.textContent = tr("Saved ✓", "저장됨 ✓");
             note.textContent = result.created
-              ? "이 기기의 단어장에 저장했습니다."
-              : "이미 단어장에 있는 단어입니다.";
+              ? tr(
+                  "Saved to this device's wordbook.",
+                  "이 기기의 단어장에 저장했습니다.",
+                )
+              : tr(
+                  "This word is already in your wordbook.",
+                  "이미 단어장에 있는 단어입니다.",
+                );
           } catch (error) {
             button.disabled = false;
-            button.textContent = "다시 저장";
+            button.textContent = tr("Retry save", "다시 저장");
             note.textContent =
-              error instanceof Error ? error.message : "저장하지 못했습니다.";
+              error instanceof Error
+                ? error.message
+                : tr("Could not save the word.", "저장하지 못했습니다.");
           }
           if (host?.isConnected && token === revision) position();
         };
@@ -176,10 +206,12 @@ export function createOverlay(
   window.addEventListener("scroll", close, true);
   window.addEventListener("resize", close);
   window.addEventListener("blur", close);
+  const unsubscribeLocale = subscribeLocale(close);
   return {
     close,
     show,
     dispose() {
+      unsubscribeLocale();
       close();
       window.removeEventListener("pointerdown", outside, true);
       window.removeEventListener("keydown", escape, true);

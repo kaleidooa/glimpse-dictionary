@@ -1,3 +1,5 @@
+import { definitionLabel } from "../lib/definition-labels";
+import { t as tr } from "../lib/i18n";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { BrowserDefinitionProvider, type Definition } from "../lib/definitions";
@@ -61,13 +63,16 @@ export function MeaningPopup({
       <div className="meaning-heading">
         <strong>{word.word}</strong>
         <span>{definition?.phonetic}</span>
-        <button aria-label="뜻 닫기" onClick={onClose}>
+        <button
+          aria-label={tr("Close definition", "뜻 닫기")}
+          onClick={onClose}
+        >
           <X size={13} />
         </button>
       </div>
       {definition?.matchedBy === "inflection" && (
         <small>
-          원형:{" "}
+          {tr("Base form:", "원형:")}{" "}
           {(definition.lemmas ?? [definition.lemma])
             .filter(
               (item) => item?.toLowerCase() !== definition.word.toLowerCase(),
@@ -78,22 +83,28 @@ export function MeaningPopup({
       {definition?.senses?.length ? (
         definition.senses.slice(0, 3).map((sense, i) => (
           <p key={i}>
-            <small>{sense.partOfSpeech} </small>
+            <small>{definitionLabel(sense.partOfSpeech)} </small>
             {sense.meaning}
           </p>
         ))
       ) : (
-        <p>{definition ? definition.meaning : "뜻을 찾고 있어요…"}</p>
+        <p>
+          {definition
+            ? definition.meaning
+            : tr("Looking up the word…", "뜻을 찾고 있어요…")}
+        </p>
       )}
       <div className="meaning-source">
-        {definition?.partOfSpeech && <span>{definition.partOfSpeech} · </span>}
-        {definition?.source ?? "DICTIONARY"}
+        {definition?.partOfSpeech && (
+          <span>{definitionLabel(definition.partOfSpeech)} · </span>
+        )}
+        {definitionLabel(definition?.source) || "DICTIONARY"}
         {definition?.sourceLinks?.map((link) => (
           <span key={link.url}>
             {" "}
             ·{" "}
             <a href={link.url} target="_blank" rel="noreferrer noopener">
-              {link.label} 출처
+              {link.label} {tr("Source", "출처")}{" "}
             </a>
           </span>
         ))}

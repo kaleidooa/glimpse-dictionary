@@ -1,3 +1,4 @@
+import { t as tr } from "../src/lib/i18n";
 import {
   API_ORIGIN,
   defineWord,
@@ -7,6 +8,11 @@ import {
 } from "./dictionary";
 import { getSettings, WEB_ORIGINS } from "./settings";
 import { VocabularyStore, VOCABULARY_KEY } from "../src/lib/vocabulary";
+import { applyLocale, asLocale, LOCALE_KEY } from "../src/lib/i18n";
+const localeReady = chrome.storage.local
+  .get(LOCALE_KEY)
+  .then((data) => applyLocale(data[LOCALE_KEY]))
+  .catch(() => {});
 const vocabulary = new VocabularyStore({
   async get() {
     return (await chrome.storage.local.get(VOCABULARY_KEY))[VOCABULARY_KEY];
@@ -108,8 +114,10 @@ async function command(tab?: chrome.tabs.Tab) {
     await chrome.action
       .setTitle({
         tabId: active.id,
-        title:
+        title: tr(
+          "Cannot access this page. Open the extension on a regular webpage.",
           "이 페이지에는 접근할 수 없습니다. 일반 웹페이지에서 확장을 열어 주세요.",
+        ),
       })
       .catch(() => {});
   }
@@ -137,6 +145,21 @@ chrome.permissions.onRemoved.addListener((permissions) => {
   void (onlyDictionary ? syncScripts() : stopReaders().then(syncScripts));
 });
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && LOCALE_KEY in changes) {
+    applyLocale(changes[LOCALE_KEY].newValue);
+    void chrome.tabs.query({}).then((tabs) =>
+      Promise.allSettled(
+        tabs
+          .filter((tab) => tab.id !== undefined)
+          .map((tab) =>
+            chrome.tabs.sendMessage(tab.id!, {
+              type: "GLIMPSE_LOCALE",
+              locale: asLocale(changes[LOCALE_KEY].newValue),
+            }),
+          ),
+      ),
+    );
+  }
   if (
     area === "local" &&
     ["online", "allSites", "siteOrigins"].some((key) => key in changes)
@@ -160,12 +183,20 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
     return;
   const extensionPage = !!sender.url?.startsWith(chrome.runtime.getURL(""));
   const labPage = sender.url?.startsWith(chrome.runtime.getURL("lab/"));
+  if (message.type === "GLIMPSE_GET_LOCALE" && (sender.tab || extensionPage)) {
+    void chrome.storage.local
+      .get(LOCALE_KEY)
+      .then((data) => reply(asLocale(data[LOCALE_KEY])))
+      .catch(() => reply("en"));
+    return true;
+  }
   if (
     message.type === "GLIMPSE_DEFINE" &&
     (sender.tab || extensionPage || labPage) &&
     validWord(message.word)
   ) {
-    void getSettings()
+    void localeReady
+      .then(getSettings)
       .then(async (settings) =>
         defineWord(
           message.word,
@@ -177,9 +208,12 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
       .catch(() =>
         reply({
           word: message.word,
-          meaning: "사전 설정을 확인해 주세요.",
+          meaning: tr(
+            "Check the dictionary settings.",
+            "사전 설정을 확인해 주세요.",
+          ),
           language: "ko",
-          source: "조회 불가",
+          source: tr("Lookup unavailable", "조회 불가"),
         }),
       );
     return true;
@@ -193,7 +227,10 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
           error:
             error instanceof Error
               ? error.message
-              : "단어장을 저장하지 못했습니다.",
+              : tr(
+                  "Could not save the wordbook.",
+                  "단어장을 저장하지 못했습니다.",
+                ),
         }),
       );
     return true;
@@ -205,7 +242,8 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
     validWord(message.word)
   ) {
     return respond(
-      getSettings()
+      localeReady
+        .then(getSettings)
         .then(async (settings) =>
           defineWord(
             message.word,
@@ -240,7 +278,10 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
           ? onlineDefinition("serendipity")
           : {
               ...unavailable("serendipity", "online-disabled"),
-              meaning: "보조 영영 사전이 꺼져 있습니다. 먼저 위 설정을 켜세요.",
+              meaning: tr(
+                "The online English dictionary is off. Enable it in Settings first.",
+                "보조 영영 사전이 꺼져 있습니다. 먼저 위 설정을 켜세요.",
+              ),
             },
       )
       .then(reply)
@@ -254,8 +295,10 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
       .catch(() =>
         reply({
           ok: false,
-          error:
+          error: tr(
+            "Cannot access this page. Try a regular HTTP/HTTPS webpage.",
             "이 페이지에는 접근할 수 없습니다. 일반 HTTP/HTTPS 웹페이지에서 다시 시도해 주세요.",
+          ),
         }),
       );
     return true;

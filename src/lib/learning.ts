@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import {
   groupedKeys,
   predict,
@@ -30,16 +31,30 @@ export function improveCalibration(
   const usable = learningLogs(logs, base.id),
     examples = usable.map((l) => l.learningExample!);
   if (examples.length < 30)
-    throw new Error("안정적인 추가 학습 30회 이상이 필요합니다.");
+    throw new Error(
+      tr(
+        "At least 30 stable training trials are required.",
+        "안정적인 추가 학습 30회 이상이 필요합니다.",
+      ),
+    );
   const keys = groupedKeys(examples);
   if (keys.length < 15)
     throw new Error(
-      "화면의 다양한 위치에서 측정해 주세요. 서로 다른 15개 영역이 필요합니다.",
+      tr(
+        "Sample different screen positions. At least 15 distinct regions are required.",
+        "화면의 다양한 위치에서 측정해 주세요. 서로 다른 15개 영역이 필요합니다.",
+      ),
     );
   const heldKeys = new Set(keys.filter((_, i) => i % 4 === 0));
   const train = examples.filter((e) => !heldKeys.has(spatialKey(e.target))),
     held = examples.filter((e) => heldKeys.has(spatialKey(e.target)));
-  if (held.length < 5) throw new Error("별도 확인용 데이터가 부족합니다.");
+  if (held.length < 5)
+    throw new Error(
+      tr(
+        "Not enough held-out validation data.",
+        "별도 확인용 데이터가 부족합니다.",
+      ),
+    );
   const added: CalibrationRow[] = train.flatMap((e, i) =>
     e.frames.map((f) => ({ ...f, target: e.target, pointIndex: 1000 + i })),
   );

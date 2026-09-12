@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import type { Definition, DefinitionSense } from "./definition-types";
 import { normalizeWord, validWord } from "./morphology";
 
@@ -29,7 +30,9 @@ export const isDictionarySource = (value: unknown): value is string =>
   );
 function parseEntry(value: unknown): SavedWord {
   if (!value || typeof value !== "object")
-    throw new Error("올바른 단어장 파일이 아닙니다.");
+    throw new Error(
+      tr("Invalid wordbook file.", "올바른 단어장 파일이 아닙니다."),
+    );
   const data = value as Record<string, unknown>;
   if (
     !validWord(data.word) ||
@@ -39,32 +42,38 @@ function parseEntry(value: unknown): SavedWord {
     Number(data.savedAt) < 0 ||
     Number(data.savedAt) > 1e13
   )
-    throw new Error("단어장에 올바르지 않은 항목이 있습니다.");
+    throw new Error(
+      tr(
+        "The wordbook contains an invalid entry.",
+        "단어장에 올바르지 않은 항목이 있습니다.",
+      ),
+    );
   const senses: DefinitionSense[] = Array.isArray(data.senses)
-    ? data.senses
-        .slice(0, 3)
-        .flatMap((s) =>
-          s && typeof s === "object" && clean(s.meaning, 600)
-            ? [
-                {
-                  meaning: clean(s.meaning, 600),
-                  partOfSpeech: clean(s.partOfSpeech, 40) || undefined,
-                  headword: validWord(s.headword)
-                    ? normalizeWord(s.headword)
-                    : undefined,
-                },
-              ]
-            : [],
-        )
+    ? data.senses.slice(0, 3).flatMap((s) =>
+        s && typeof s === "object" && clean(s.meaning, 600)
+          ? [
+              {
+                meaning: clean(s.meaning, 600),
+                partOfSpeech: clean(s.partOfSpeech, 40) || undefined,
+                headword: validWord(s.headword)
+                  ? normalizeWord(s.headword)
+                  : undefined,
+              },
+            ]
+          : [],
+      )
     : [];
   const sourceLinks = Array.isArray(data.sourceLinks)
-    ? data.sourceLinks
-        .slice(0, 8)
-        .flatMap((link) =>
-          link && isDictionarySource(link.url)
-            ? [{ label: clean(link.label, 80) || "출처", url: link.url }]
-            : [],
-        )
+    ? data.sourceLinks.slice(0, 8).flatMap((link) =>
+        link && isDictionarySource(link.url)
+          ? [
+              {
+                label: clean(link.label, 80) || tr("Source", "출처"),
+                url: link.url,
+              },
+            ]
+          : [],
+      )
     : [];
   return {
     word: normalizeWord(data.word),
@@ -81,12 +90,19 @@ function parseEntry(value: unknown): SavedWord {
 }
 export function parseVocabularyBackup(text: string): SavedWord[] {
   if (text.length > 5_000_000)
-    throw new Error("5MB 이하의 Glimpse JSON 백업을 선택해 주세요.");
+    throw new Error(
+      tr(
+        "Choose a Glimpse JSON backup no larger than 5 MB.",
+        "5MB 이하의 Glimpse JSON 백업을 선택해 주세요.",
+      ),
+    );
   let data;
   try {
     data = JSON.parse(text.replace(/^\ufeff/, ""));
   } catch {
-    throw new Error("JSON 파일을 읽지 못했습니다.");
+    throw new Error(
+      tr("Could not read the JSON file.", "JSON 파일을 읽지 못했습니다."),
+    );
   }
   if (
     data?.format !== "glimpse-vocabulary" ||
@@ -94,7 +110,12 @@ export function parseVocabularyBackup(text: string): SavedWord[] {
     !Array.isArray(data.entries) ||
     data.entries.length > VOCABULARY_LIMIT
   )
-    throw new Error("Glimpse 단어장 JSON 백업이 아닙니다.");
+    throw new Error(
+      tr(
+        "This is not a Glimpse wordbook backup.",
+        "Glimpse 단어장 JSON 백업이 아닙니다.",
+      ),
+    );
   return data.entries.map(parseEntry);
 }
 export function vocabularyJSON(entries: SavedWord[]) {
@@ -157,7 +178,10 @@ export class VocabularyStore {
       raw.entries.length > VOCABULARY_LIMIT
     )
       throw new Error(
-        "저장된 단어장을 읽지 못했습니다. 기존 데이터를 덮어쓰지 않았습니다.",
+        tr(
+          "Could not read the saved wordbook. Existing data has not been overwritten.",
+          "저장된 단어장을 읽지 못했습니다. 기존 데이터를 덮어쓰지 않았습니다.",
+        ),
       );
     return raw.entries.map(parseEntry).sort((a, b) => b.savedAt - a.savedAt);
   }
@@ -170,12 +194,19 @@ export class VocabularyStore {
         const next = fn(await this.list());
         if (next.entries.length > VOCABULARY_LIMIT)
           throw new Error(
-            `이 기기에는 ${VOCABULARY_LIMIT.toLocaleString()}개까지 보관할 수 있습니다. 백업 후 일부를 정리해 주세요.`,
+            tr(
+              "This device can hold up to {0} words. Back up your wordbook, then remove some words.",
+              "이 기기에는 {0}개까지 보관할 수 있습니다. 백업 후 일부를 정리해 주세요.",
+              VOCABULARY_LIMIT.toLocaleString(),
+            ),
           );
         const value = { version: 1, entries: next.entries };
         if (new TextEncoder().encode(JSON.stringify(value)).length > 4_000_000)
           throw new Error(
-            "단어장 저장 공간이 가득 찼습니다. 백업 후 일부를 정리해 주세요.",
+            tr(
+              "Wordbook storage is full. Back it up, then remove some words.",
+              "단어장 저장 공간이 가득 찼습니다. 백업 후 일부를 정리해 주세요.",
+            ),
           );
         await this.storage.set(value);
         return next.result;
@@ -185,7 +216,14 @@ export class VocabularyStore {
   }
   save(definition: Definition): Promise<{ created: boolean }> {
     if (definition.status !== "found")
-      return Promise.reject(new Error("뜻을 찾은 단어만 저장할 수 있습니다."));
+      return Promise.reject(
+        new Error(
+          tr(
+            "Only words with a definition can be saved.",
+            "뜻을 찾은 단어만 저장할 수 있습니다.",
+          ),
+        ),
+      );
     const senses = definition.senses?.slice(0, 3) ?? [
       { meaning: definition.meaning, partOfSpeech: definition.partOfSpeech },
     ];
@@ -196,7 +234,7 @@ export class VocabularyStore {
       sourceLinks:
         definition.sourceLinks ??
         (definition.sourceUrl
-          ? [{ label: "출처", url: definition.sourceUrl }]
+          ? [{ label: tr("Source", "출처"), url: definition.sourceUrl }]
           : []),
       savedAt: Date.now(),
       known: false,

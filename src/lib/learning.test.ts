@@ -1,3 +1,6 @@
+import { beforeEach as beforeLanguageTest } from "vitest";
+import { applyLocale } from "./i18n";
+beforeLanguageTest(() => applyLocale("ko"));
 import { describe, it, expect } from "vitest";
 import { improveCalibration } from "./learning";
 import {

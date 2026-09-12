@@ -1,3 +1,4 @@
+import { t as tr } from "./lib/i18n";
 import {
   useCallback,
   useEffect,
@@ -303,7 +304,12 @@ export default function LabApp() {
       setPopup(null);
       if (live.current.calibration) {
         setCalibration(null);
-        setNotice("화면 크기가 변경되었습니다. 시선을 다시 보정해 주세요.");
+        setNotice(
+          tr(
+            "The viewport changed. Please recalibrate your gaze.",
+            "화면 크기가 변경되었습니다. 시선을 다시 보정해 주세요.",
+          ),
+        );
       }
       setMode("read");
       setTargetId(null);
@@ -362,7 +368,12 @@ export default function LabApp() {
     if (!visible.length) {
       setTargetId(null);
       setTrialPending(false);
-      setNotice("실험할 영어 단어가 화면에 보이도록 스크롤해 주세요.");
+      setNotice(
+        tr(
+          "Scroll until the target English words are visible.",
+          "실험할 영어 단어가 화면에 보이도록 스크롤해 주세요.",
+        ),
+      );
       return false;
     }
     const target = chooseBalancedTarget(
@@ -547,18 +558,34 @@ export default function LabApp() {
       setNotice(
         (
           {
-            "scroll-settling":
+            "scroll-settling": tr(
+              "After scrolling stops, look at the word briefly and press Space.",
               "스크롤이 멈춘 뒤 단어를 잠시 바라보고 Space를 누르세요.",
-            "target-settling": "새 목표를 잠시 바라본 다음 Space를 누르세요.",
-            "run-complete":
+            ),
+            "target-settling": tr(
+              "Look at the new target briefly, then press Space.",
+              "새 목표를 잠시 바라본 다음 Space를 누르세요.",
+            ),
+            "run-complete": tr(
+              "Experiment complete. Start a new run or return to reading.",
               "실험이 끝났습니다. 새 실험을 시작하거나 읽기로 돌아가세요.",
-            "not-calibrated": "웹캠을 연결한 뒤 9점 시선 보정을 진행해 주세요.",
-            "insufficient-recent-gaze":
+            ),
+            "not-calibrated": tr(
+              "Connect a webcam and calibrate your gaze first.",
+              "웹캠을 연결한 뒤 9점 시선 보정을 진행해 주세요.",
+            ),
+            "insufficient-recent-gaze": tr(
+              "Not enough recent gaze data. Look at the word briefly, then press Space again.",
               "최근 시선 데이터가 부족합니다. 단어를 잠시 바라본 뒤 다시 Space를 누르세요.",
-            "too-far-from-text":
+            ),
+            "too-far-from-text": tr(
+              "Your gaze is too far from the text. Check your posture or recalibrate.",
               "시선이 글에서 너무 멉니다. 자세를 확인하거나 다시 보정해 주세요.",
-            "target-not-visible":
+            ),
+            "target-not-visible": tr(
+              "The target is outside the viewport. Choose the next target.",
               "목표 단어가 화면 밖에 있습니다. 다음 목표를 선택해 주세요.",
+            ),
           } as Record<string, string>
         )[reason],
       );
@@ -604,7 +631,12 @@ export default function LabApp() {
     setCalibrating(false);
     setMode("read");
     newRun();
-    setNotice("보정이 완료되었습니다. 단어를 바라보고 Space를 누르세요.");
+    setNotice(
+      tr(
+        "Calibration complete. Look at a word and press Space.",
+        "보정이 완료되었습니다. 단어를 바라보고 Space를 누르세요.",
+      ),
+    );
     focusReader();
   };
   const currentLogs = data.logs.filter(
@@ -655,11 +687,17 @@ export default function LabApp() {
         setProtocol("evaluation");
         setMode("read");
         setNotice(
-          "개선된 보정을 적용했습니다. 새 평가 실험으로 단어 정확도를 확인하세요.",
+          tr(
+            "Improved calibration applied. Start a new evaluation to check word accuracy.",
+            "개선된 보정을 적용했습니다. 새 평가 실험으로 단어 정확도를 확인하세요.",
+          ),
         );
       } else
         setNotice(
-          "별도 확인 데이터에서 충분한 개선이 없어 기존 보정을 유지합니다.",
+          tr(
+            "Held-out data did not show enough improvement. The existing calibration is unchanged.",
+            "별도 확인 데이터에서 충분한 개선이 없어 기존 보정을 유지합니다.",
+          ),
         );
     } catch (e) {
       setNotice((e as Error).message);
@@ -697,8 +735,10 @@ export default function LabApp() {
         context.registerTool(
           {
             name: "read_experiment_metrics",
-            description:
+            description: tr(
+              "Read the current input mode and aggregate accuracy. Does not return raw gaze, face features or page content.",
               "현재 Glimpse 실험의 입력 방식과 집계 정확도를 읽습니다. 원본 시선, 얼굴 특징, 본문은 반환하지 않습니다.",
+            ),
             inputSchema: {
               type: "object",
               properties: {},
@@ -729,7 +769,12 @@ export default function LabApp() {
     : null;
   const applyText = () => {
     if (!tokenize(draft).length) {
-      setNotice("영어 단어를 한 개 이상 입력해 주세요.");
+      setNotice(
+        tr(
+          "Enter at least one English word.",
+          "영어 단어를 한 개 이상 입력해 주세요.",
+        ),
+      );
       return;
     }
     setText(draft.slice(0, 50000));
@@ -743,17 +788,22 @@ export default function LabApp() {
   return (
     <div className="app">
       <header className="topbar">
-        <a className="brand" href="./index.html" aria-label="Glimpse 홈">
+        <a
+          className="brand"
+          href="./index.html"
+          aria-label={tr("Glimpse home", "Glimpse 홈")}
+        >
           <Eye size={24} />
           <strong>
             glimpse<span>.</span>
           </strong>
         </a>
         <span className="app-label">
-          시선 추적 실험실 <span className="version">BETA</span>
+          {tr("Eye-tracking lab", "시선 추적 실험실")}{" "}
+          <span className="version">BETA</span>
         </span>
         <span className="local-badge">
-          <i /> 기기 안에서 실험
+          <i /> {tr("Local experiment", "기기 안에서 실험")}{" "}
         </span>
       </header>
       <main>
@@ -762,9 +812,13 @@ export default function LabApp() {
             <div className="eyebrow">
               A LITTLE LESS FRICTION. A LITTLE MORE DISCOVERY.
             </div>
-            <h1>읽는 흐름은 그대로.</h1>
+            <h1>{tr("Keep reading.", "읽는 흐름은 그대로.")}</h1>
             <p>
-              모르는 단어를 바라보고 <kbd>Space</kbd> 를 누르세요.
+              {tr(
+                "Look at an unfamiliar word and press",
+                "모르는 단어를 바라보고",
+              )}{" "}
+              <kbd>Space</kbd> {tr(".", "를 누르세요.")}{" "}
             </p>
           </div>
           <div className="flow">
@@ -774,13 +828,17 @@ export default function LabApp() {
         </div>
         <div className="workspace">
           <div className="reader-column">
-            <div className="mode-tabs" role="tablist" aria-label="읽기 모드">
+            <div
+              className="mode-tabs"
+              role="tablist"
+              aria-label={tr("Reading mode", "읽기 모드")}
+            >
               <button
                 role="tab"
                 aria-selected={mode === "read"}
                 onClick={() => changeMode("read")}
               >
-                <BookOpen size={14} /> 읽기
+                <BookOpen size={14} /> {tr("Read", "읽기")}{" "}
               </button>
               <button
                 role="tab"
@@ -788,16 +846,23 @@ export default function LabApp() {
                 onClick={() => changeMode("test")}
                 disabled={editing || !ready}
               >
-                <FlaskConical size={14} /> 정확도 실험
+                <FlaskConical size={14} />{" "}
+                {tr("Accuracy test", "정확도 실험")}{" "}
               </button>
               <span>
                 {scrolling
-                  ? "스크롤 후 시선 대기"
+                  ? tr(
+                      "Waiting for fresh gaze after scroll",
+                      "스크롤 후 시선 대기",
+                    )
                   : source === "mouse"
-                    ? "마우스 시뮬레이션"
+                    ? tr("Mouse simulation", "마우스 시뮬레이션")
                     : calibration
-                      ? "시선 보정 완료"
-                      : "웹캠 연결 → 정밀 보정"}
+                      ? tr("Gaze calibrated", "시선 보정 완료")
+                      : tr(
+                          "Connect webcam → precise calibration",
+                          "웹캠 연결 → 정밀 보정",
+                        )}
               </span>
             </div>
             {mode === "test" && (
@@ -806,25 +871,58 @@ export default function LabApp() {
                 <div>
                   <strong>
                     {runComplete
-                      ? `${trialGoal}회 ${protocol === "training" ? "추가 학습" : "평가"} 완료`
+                      ? tr(
+                          "Completed {0} {1} trials",
+                          "{0}회 {1} 완료",
+                          trialGoal,
+                          protocol === "training"
+                            ? tr("training", "추가 학습")
+                            : tr("evaluation", "평가"),
+                        )
                       : trialPending && lastLog?.trial
                         ? lastLog.trial.exactCorrect
-                          ? "정확한 단어를 찾았어요."
-                          : `예측: ${lastLog.trial.predictedWord ?? "선택 없음"}`
-                        : `목표: ${tokens.find((t) => t.id === targetId)?.word ?? "—"}`}
+                          ? tr(
+                              "Correct word selected.",
+                              "정확한 단어를 찾았어요.",
+                            )
+                          : tr(
+                              "Predicted: {0}",
+                              "예측: {0}",
+                              lastLog.trial.predictedWord ??
+                                tr("none", "선택 없음"),
+                            )
+                        : tr(
+                            "Target: {0}",
+                            "목표: {0}",
+                            tokens.find((t) => t.id === targetId)?.word ?? "—",
+                          )}
                   </strong>
                   <p>
                     {runComplete
-                      ? "결과를 확인하고 새 평가 또는 추가 학습을 진행하세요."
+                      ? tr(
+                          "Review the results, then start a new evaluation or training run.",
+                          "결과를 확인하고 새 평가 또는 추가 학습을 진행하세요.",
+                        )
                       : scrolling
-                        ? "스크롤이 멈춘 후 새 시선을 수집합니다."
+                        ? tr(
+                            "Collecting fresh gaze after scrolling stops.",
+                            "스크롤이 멈춘 후 새 시선을 수집합니다.",
+                          )
                         : trialPending
-                          ? "결과를 기록했습니다. 다음 목표를 준비합니다."
-                          : "밑줄 표시된 단어를 바라보고 Space를 누르세요."}
+                          ? tr(
+                              "Result recorded. Preparing the next target.",
+                              "결과를 기록했습니다. 다음 목표를 준비합니다.",
+                            )
+                          : tr(
+                              "Look at the underlined word and press Space.",
+                              "밑줄 표시된 단어를 바라보고 Space를 누르세요.",
+                            )}
                   </p>
                 </div>
                 <span>
-                  {protocol === "training" ? "학습" : "평가"}{" "}
+                  {protocol === "training"
+                    ? tr("Training", "학습")
+                    : tr("Evaluation", "평가")}{" "}
                   {Math.min(
                     trialGoal,
                     stats.trials + (trialPending || runComplete ? 0 : 1),
@@ -838,7 +936,7 @@ export default function LabApp() {
                     pickTarget();
                     focusReader();
                   }}
-                  aria-label="다음 목표 단어"
+                  aria-label={tr("Next target word", "다음 목표 단어")}
                 >
                   <ArrowRight size={16} />
                 </button>
@@ -862,13 +960,18 @@ export default function LabApp() {
                   }}
                 >
                   <FileText size={12} />{" "}
-                  {editing ? "편집 닫기" : "텍스트 바꾸기"}
+                  {editing
+                    ? tr("Close editor", "편집 닫기")
+                    : tr("Change text", "텍스트 바꾸기")}
                 </button>
               </div>
               {editing ? (
                 <div className="editor">
                   <label htmlFor="reading-input">
-                    읽고 싶은 영어 글을 붙여넣으세요.
+                    {tr(
+                      "Paste English text to read.",
+                      "읽고 싶은 영어 글을 붙여넣으세요.",
+                    )}{" "}
                   </label>
                   <textarea
                     id="reading-input"
@@ -879,10 +982,11 @@ export default function LabApp() {
                   />
                   <div className="button-row">
                     <button onClick={() => setDraft(SAMPLE)}>
-                      샘플 불러오기
+                      {tr("Load sample", "샘플 불러오기")}{" "}
                     </button>
                     <button className="primary" onClick={applyText}>
-                      읽기 시작 <ArrowRight size={14} />
+                      {tr("Start reading", "읽기 시작")}{" "}
+                      <ArrowRight size={14} />
                     </button>
                   </div>
                 </div>
@@ -908,7 +1012,7 @@ export default function LabApp() {
                     className="reading-text"
                     ref={reader}
                     tabIndex={0}
-                    aria-label="영어 읽기 영역"
+                    aria-label={tr("English reading area", "영어 읽기 영역")}
                   >
                     {tokens.map((token) => {
                       const gap = text.slice(cursor, token.start);
@@ -935,7 +1039,11 @@ export default function LabApp() {
                     {text.slice(cursor)}
                   </div>
                   <footer className="reader-footer">
-                    시선은 단어에. 뜻이 필요할 때만 <kbd>Space</kbd>
+                    {tr(
+                      "Look at the word. When you need a definition, press",
+                      "시선은 단어에. 뜻이 필요할 때만",
+                    )}{" "}
+                    <kbd>Space</kbd>
                     <span>EN → KO</span>
                   </footer>
                 </>
@@ -946,14 +1054,25 @@ export default function LabApp() {
                 <div className="results-title">
                   <div>
                     <span className="eyebrow">THIS EXPERIMENT</span>
-                    <h3>작은 실험, 확인 가능한 결과.</h3>
+                    <h3>
+                      {tr("Experiment results", "작은 실험, 확인 가능한 결과.")}
+                    </h3>
                   </div>
                   <span className="tiny-badge">
                     {source === "mouse"
-                      ? "MOUSE · 시선 정확도 아님"
+                      ? tr(
+                          "MOUSE · not webcam accuracy",
+                          "MOUSE · 시선 정확도 아님",
+                        )
                       : protocol === "training"
-                        ? "추가 학습 · 최종 평가 아님"
-                        : "독립 평가 · 모델 고정"}
+                        ? tr(
+                            "Additional training · not a final evaluation",
+                            "추가 학습 · 최종 평가 아님",
+                          )
+                        : tr(
+                            "Independent evaluation · fixed model",
+                            "독립 평가 · 모델 고정",
+                          )}
                   </span>
                 </div>
                 <div className="metric-grid">
@@ -971,25 +1090,37 @@ export default function LabApp() {
                   ))}
                 </div>
                 <p className="muted">
-                  {stats.trials} trials · 미선택 {stats.noPrediction}회 포함 ·
-                  오차 계산 {stats.errorCount}회
+                  {stats.trials}{" "}
+                  {tr("trials · no selection", "trials · 미선택")}{" "}
+                  {stats.noPrediction}
+                  {tr(
+                    "included · error measured for",
+                    "회 포함 · 오차 계산",
+                  )}{" "}
+                  {stats.errorCount}
+                  {tr(" trials", "회")}{" "}
                 </p>
                 <p className="muted">
-                  큰 오차 확인 · P90 {px(stats.p90Error)} · 정답률 95% 구간{" "}
+                  {tr("Large errors · P90", "큰 오차 확인 · P90")}{" "}
+                  {px(stats.p90Error)}{" "}
+                  {tr("· Accuracy 95% interval", "· 정답률 95% 구간")}{" "}
                   {stats.exactInterval
                     ? `${pct(stats.exactInterval[0])}–${pct(stats.exactInterval[1])}`
                     : "—"}
                 </p>
                 <p className="muted">
-                  스크롤 후 2초 이내: {afterScrollStats.trials}회 · Exact{" "}
-                  {pct(afterScrollStats.exact)} · 오차{" "}
+                  {tr("Within 2 seconds of scrolling:", "스크롤 후 2초 이내:")}{" "}
+                  {afterScrollStats.trials}
+                  {tr(" trials · Exact", "회 · Exact")}{" "}
+                  {pct(afterScrollStats.exact)} {tr("· Error", "· 오차")}{" "}
                   {px(afterScrollStats.medianError)}
                 </p>
                 {protocol === "training" && (
                   <p className="muted">
-                    추가 학습은 정답 단어의 화면 위치와 눈 특징을 저장합니다.
-                    모델은 ‘학습 반영’ 전까지 고정되며, 적용 후 새 평가 데이터로
-                    성능을 확인하세요.
+                    {tr(
+                      "Training records the target word position and eye features. The model stays fixed until you apply training. Evaluate it on new data after applying a change.",
+                      "추가 학습은 정답 단어의 화면 위치와 눈 특징을 저장합니다. 모델은 ‘학습 반영’ 전까지 고정되며, 적용 후 새 평가 데이터로 성능을 확인하세요.",
+                    )}{" "}
                   </p>
                 )}
               </section>
@@ -998,7 +1129,7 @@ export default function LabApp() {
           <aside>
             <section className="panel">
               <div className="panel-title">
-                <Eye size={16} /> 시선 연결{" "}
+                <Eye size={16} /> {tr("Gaze input", "시선 연결")}{" "}
                 <span className="tiny-badge">
                   {source === "mouse"
                     ? "SIMULATION"
@@ -1007,18 +1138,21 @@ export default function LabApp() {
                       : "SETUP"}
                 </span>
               </div>
-              <div className="source-switch" aria-label="입력 방식">
+              <div
+                className="source-switch"
+                aria-label={tr("Input method", "입력 방식")}
+              >
                 <button
                   aria-pressed={source === "webcam"}
                   onClick={() => changeSource("webcam")}
                 >
-                  <Camera size={13} /> 웹캠
+                  <Camera size={13} /> {tr("Webcam", "웹캠")}{" "}
                 </button>
                 <button
                   aria-pressed={source === "mouse"}
                   onClick={() => changeSource("mouse")}
                 >
-                  <MousePointer2 size={13} /> 마우스
+                  <MousePointer2 size={13} /> {tr("Mouse", "마우스")}{" "}
                 </button>
               </div>
               <div hidden={source !== "webcam"}>
@@ -1032,11 +1166,19 @@ export default function LabApp() {
                     <i className={calibration ? "ready-dot" : "waiting-dot"} />
                     {calibration
                       ? calibration.learning
-                        ? "추가 학습 확인 오차"
-                        : `${calibration.plan?.points ?? 9}점 보정 완료`
-                      : "시선 보정이 필요해요"}
+                        ? tr("Training validation error", "추가 학습 확인 오차")
+                        : tr(
+                            "Calibrated at {0} points",
+                            "{0}점 보정 완료",
+                            calibration.plan?.points ?? 9,
+                          )
+                      : tr("Calibration needed", "시선 보정이 필요해요")}
                   </span>
-                  <span>{calibration ? px(validationError) : "미보정"}</span>
+                  <span>
+                    {calibration
+                      ? px(validationError)
+                      : tr("Uncalibrated", "미보정")}
+                  </span>
                 </div>
                 <button
                   className="full"
@@ -1049,29 +1191,40 @@ export default function LabApp() {
                   }}
                 >
                   <Crosshair size={14} />
-                  {calibration ? "다시 보정하기" : "정밀 시선 보정"}
+                  {calibration
+                    ? tr("Recalibrate", "다시 보정하기")
+                    : tr("Precise gaze calibration", "정밀 시선 보정")}
                 </button>
               </div>
               {source === "mouse" && (
                 <div className="mouse-guide">
                   <MousePointer2 size={27} />
-                  <h3>카메라 없이 먼저 살펴보기</h3>
+                  <h3>
+                    {tr("Try without a camera", "카메라 없이 먼저 살펴보기")}
+                  </h3>
                   <p>
-                    단어 위에 마우스를 두고
-                    <br />
-                    잠시 기다린 뒤 Space를 누르세요.
+                    {tr("Point at a word,", "단어 위에 마우스를 두고")} <br />
+                    {tr(
+                      "wait briefly, then press Space.",
+                      "잠시 기다린 뒤 Space를 누르세요.",
+                    )}{" "}
                   </p>
-                  <span>시뮬레이션 결과는 웹캠 결과와 분리됩니다.</span>
+                  <span>
+                    {tr(
+                      "Simulation results are separate from webcam results.",
+                      "시뮬레이션 결과는 웹캠 결과와 분리됩니다.",
+                    )}
+                  </span>
                 </div>
               )}
             </section>
             <section className="panel debug-panel">
               <div className="panel-title">
-                <Activity size={15} /> 실시간 신호{" "}
+                <Activity size={15} /> {tr("Live signal", "실시간 신호")}{" "}
                 <label className="toggle">
                   <input
                     type="checkbox"
-                    aria-label="시선 점 표시"
+                    aria-label={tr("Show gaze point", "시선 점 표시")}
                     checked={overlay}
                     onChange={(e) => setOverlay(e.target.checked)}
                   />
@@ -1083,7 +1236,10 @@ export default function LabApp() {
                   ? "MOUSE INPUT"
                   : calibration
                     ? "CALIBRATED GAZE"
-                    : "RAW · 보정 전 참고 좌표"}
+                    : tr(
+                        "RAW · uncalibrated reference coordinates",
+                        "RAW · 보정 전 참고 좌표",
+                      )}
                 <span>{source === "mouse" ? "25 Hz" : `${fps} Hz`}</span>
               </div>
               <div className="coordinate-grid">
@@ -1099,26 +1255,26 @@ export default function LabApp() {
                 </div>
               </div>
               <div className="data-row">
-                <span>가장 가까운 단어</span>
+                <span>{tr("Nearest word", "가장 가까운 단어")}</span>
                 <strong>{nearest}</strong>
               </div>
               <div className="data-row">
-                <span>Space 선택</span>
+                <span>{tr("Space selection", "Space 선택")}</span>
                 <strong>{lastLog?.selectedWord ?? "—"}</strong>
               </div>
               <div className="data-row">
-                <span>선택 신뢰도</span>
+                <span>{tr("Selection confidence", "선택 신뢰도")}</span>
                 <strong>{lastLog ? pct(lastLog.confidence) : "—"}</strong>
               </div>
               <div className="data-row">
-                <span>거리 / 흔들림</span>
+                <span>{tr("Distance / jitter", "거리 / 흔들림")}</span>
                 <code>
                   {px(lastLog?.candidateWords[0]?.distance)} /{" "}
                   {px(lastLog?.fixation?.spread)}
                 </code>
               </div>
               <div className="data-row">
-                <span>사용한 샘플</span>
+                <span>{tr("Samples used", "사용한 샘플")}</span>
                 <code>
                   {lastLog?.fixation
                     ? `${lastLog.fixation.usedCount} / ${lastLog.fixation.sampleCount}`
@@ -1136,19 +1292,23 @@ export default function LabApp() {
                 </div>
               ) : null}
               <p className="debug-footnote">
-                신뢰도는 거리·시선 안정성의 참고 점수입니다.
+                {tr(
+                  "Confidence is a heuristic based on distance and gaze stability.",
+                  "신뢰도는 거리·시선 안정성의 참고 점수입니다.",
+                )}{" "}
               </p>
             </section>
             <section className="panel experiment-panel">
               <div className="panel-title">
-                <FlaskConical size={15} /> 실험 기록{" "}
+                <FlaskConical size={15} />{" "}
+                {tr("Experiment records", "실험 기록")}{" "}
                 <span className="record-count">{stats.trials}</span>
               </div>
               <div className="experiment-options">
                 <label>
-                  실험 목적
+                  {tr("Experiment purpose", "실험 목적")}{" "}
                   <select
-                    aria-label="실험 목적"
+                    aria-label={tr("Experiment purpose", "실험 목적")}
                     value={protocol}
                     onChange={(e) =>
                       configureRun(
@@ -1158,16 +1318,21 @@ export default function LabApp() {
                     }
                     disabled={learningBusy}
                   >
-                    <option value="evaluation">평가 전용</option>
+                    <option value="evaluation">
+                      {tr("Evaluation only", "평가 전용")}
+                    </option>
                     <option value="training" disabled={source !== "webcam"}>
-                      추가 학습
+                      {tr("Additional training", "추가 학습")}{" "}
                     </option>
                   </select>
                 </label>
                 <label>
-                  시행 수
+                  {tr("Trial count", "시행 수")}{" "}
                   <select
-                    aria-label="실험 시행 수"
+                    aria-label={tr(
+                      "Number of experiment trials",
+                      "실험 시행 수",
+                    )}
                     value={trialGoal}
                     onChange={(e) =>
                       configureRun(protocol, Number(e.target.value))
@@ -1176,7 +1341,8 @@ export default function LabApp() {
                   >
                     {[50, 100, 200].map((n) => (
                       <option key={n} value={n}>
-                        {n}회
+                        {n}
+                        {tr(" trials", "회")}{" "}
                       </option>
                     ))}
                   </select>
@@ -1184,8 +1350,14 @@ export default function LabApp() {
               </div>
               <p className="protocol-note">
                 {protocol === "training"
-                  ? "목표 단어를 보며 수집 → 학습 반영 → 새 평가"
-                  : "이번 실험 중 모델을 바꾸지 않고 정확도를 측정합니다."}
+                  ? tr(
+                      "Collect target samples → apply training → new evaluation",
+                      "목표 단어를 보며 수집 → 학습 반영 → 새 평가",
+                    )
+                  : tr(
+                      "Measure accuracy without changing the model during this run.",
+                      "이번 실험 중 모델을 바꾸지 않고 정확도를 측정합니다.",
+                    )}
               </p>
               <div className="experiment-summary">
                 <div>
@@ -1199,8 +1371,17 @@ export default function LabApp() {
               </div>
               <p className="muted">
                 {stats.trials
-                  ? `이번 ${source === "mouse" ? "마우스" : "웹캠"} 실험의 결과입니다.`
-                  : "실험을 시작하면 정확도가 여기에 쌓입니다."}
+                  ? tr(
+                      "Results from this {0} run.",
+                      "이번 {0} 실험의 결과입니다.",
+                      source === "mouse"
+                        ? tr("mouse", "마우스")
+                        : tr("webcam", "웹캠"),
+                    )
+                  : tr(
+                      "Start an experiment to see results here.",
+                      "실험을 시작하면 정확도가 여기에 쌓입니다.",
+                    )}
               </p>
               <button
                 className="full"
@@ -1218,11 +1399,20 @@ export default function LabApp() {
                 ) : (
                   <ArrowRight size={13} />
                 )}{" "}
-                {mode === "test" ? "새 실험 시작" : "정확도 실험 시작"}
+                {mode === "test"
+                  ? tr("Start new experiment", "새 실험 시작")
+                  : tr("Start accuracy test", "정확도 실험 시작")}
               </button>
               {source === "webcam" && (
                 <div className="learning-control">
-                  <span>현재 보정의 유효 학습 {eligibleLearning}회</span>
+                  <span>
+                    {tr(
+                      "Valid training trials for this calibration",
+                      "현재 보정의 유효 학습",
+                    )}{" "}
+                    {eligibleLearning}
+                    {tr(" trials", "회")}
+                  </span>
                   <button
                     className="full"
                     disabled={
@@ -1234,12 +1424,20 @@ export default function LabApp() {
                     onClick={applyLearning}
                   >
                     {learningBusy
-                      ? "별도 데이터로 개선 확인 중…"
-                      : "학습 반영 · 개선될 때만 적용"}
+                      ? tr(
+                          "Checking improvement on held-out data…",
+                          "별도 데이터로 개선 확인 중…",
+                        )
+                      : tr(
+                          "Apply training only if it improves",
+                          "학습 반영 · 개선될 때만 적용",
+                        )}
                   </button>
                   <small>
-                    최소 30회·15개 화면 영역 필요. 전체의 약 25%는 모델 적용
-                    확인용으로 남깁니다.
+                    {tr(
+                      "Requires 30 trials across 15 screen regions. About 25% are held out to check the candidate model.",
+                      "최소 30회·15개 화면 영역 필요. 전체의 약 25%는 모델 적용 확인용으로 남깁니다.",
+                    )}{" "}
                   </small>
                 </div>
               )}
@@ -1247,26 +1445,30 @@ export default function LabApp() {
                 <div className="learning-report" role="status">
                   <strong>
                     {learningReport.accepted
-                      ? "새 보정 적용"
-                      : "기존 보정 유지"}
+                      ? tr("New calibration applied", "새 보정 적용")
+                      : tr("Existing calibration kept", "기존 보정 유지")}
                   </strong>
                   <p>
-                    별도 {learningReport.holdoutTrials}회 확인
-                    <br />
-                    중앙값 {px(learningReport.beforeMedian)} →{" "}
+                    {tr("Held-out", "별도")} {learningReport.holdoutTrials}
+                    {tr(" trials", "회 확인")} <br />
+                    {tr("Median", "중앙값")} {px(learningReport.beforeMedian)} →{" "}
                     {px(learningReport.afterMedian)}
                     <br />
                     P90 {px(learningReport.beforeP90)} →{" "}
                     {px(learningReport.afterP90)}
                   </p>
                   <small>
-                    이 수치는 모델 선택용입니다. 새 평가 실험이 최종 확인입니다.
+                    {tr(
+                      "This score is for model selection. Run a new evaluation for a final check.",
+                      "이 수치는 모델 선택용입니다. 새 평가 실험이 최종 확인입니다.",
+                    )}{" "}
                   </small>
                 </div>
               )}
               <div className="export-row">
                 <span>
-                  <Download size={12} /> 전체 {data.logs.length}개
+                  <Download size={12} /> {tr("All", "전체")} {data.logs.length}
+                  {tr(" records", "개")}{" "}
                 </span>
                 <button
                   disabled={!data.logs.length && !data.calibrations.length}
@@ -1291,7 +1493,10 @@ export default function LabApp() {
                 onClick={() => {
                   if (
                     !window.confirm(
-                      "이 브라우저의 실험 기록과 보정을 모두 삭제할까요? 되돌릴 수 없습니다. 필요한 기록은 먼저 JSON으로 내보내세요.",
+                      tr(
+                        "Delete this browser's experiment records and calibration? This cannot be undone. Export JSON first if you need a backup.",
+                        "이 브라우저의 실험 기록과 보정을 모두 삭제할까요? 되돌릴 수 없습니다. 필요한 기록은 먼저 JSON으로 내보내세요.",
+                      ),
                     )
                   )
                     return;
@@ -1300,13 +1505,16 @@ export default function LabApp() {
                   else window.location.reload();
                 }}
               >
-                실험 기록 삭제
+                {tr("Clear experiment records", "실험 기록 삭제")}{" "}
               </button>
             </section>
             <div className="side-note">
               01 / READING EXPERIMENT
               <br />
-              일반 웹캠으로, 단어 수준의 시선을 찾을 수 있을까요?
+              {tr(
+                "Can a regular webcam distinguish individual words?",
+                "일반 웹캠으로, 단어 수준의 시선을 찾을 수 있을까요?",
+              )}{" "}
             </div>
           </aside>
         </div>

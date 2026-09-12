@@ -12,6 +12,22 @@ body {
   margin: 0;
   font-size: 14px;
 }
+.language-picker {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  margin: 16px 0 0;
+}
+.language-picker select {
+  padding: 5px 8px;
+  border: 1px solid #b8c7ab;
+  border-radius: 6px;
+  background: #fffdf7;
+  color: #344c3c;
+  font: inherit;
+}
 header {
   display: flex;
   align-items: center;

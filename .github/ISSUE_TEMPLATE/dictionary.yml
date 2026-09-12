@@ -1,20 +1,20 @@
-name: 사전 뜻 제보 / Dictionary correction
-description: 빠진 단어나 어색한 한국어 뜻을 알려 주세요.
+name: Dictionary correction
+description: Report a missing word or an incorrect Korean definition.
 body:
   - type: input
     id: word
     attributes:
-      label: 영어 단어 / English word
+      label: English word
     validations:
       required: true
   - type: textarea
     id: meaning
     attributes:
-      label: 현재 뜻과 제안하는 뜻 / Current and suggested meaning
-      description: 원문 전체는 필요하지 않습니다. 저작권이 있는 사전의 긴 설명을 그대로 붙이지 마세요.
+      label: Current and suggested meaning
     validations:
       required: true
   - type: input
     id: source
     attributes:
-      label: 참고할 공개 출처 / Public reference
+      label: Reference
+      description: Link to a source we can legally redistribute, or explain your original correction.

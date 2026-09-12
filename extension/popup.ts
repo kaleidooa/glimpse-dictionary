@@ -1,6 +1,11 @@
-﻿import { getSettings, sitePattern, WEB_ORIGINS } from "./settings";
+import { definitionLabel } from "../src/lib/definition-labels";
+import { t as tr } from "../src/lib/i18n";
+import { getSettings, sitePattern, WEB_ORIGINS } from "./settings";
 import { VERSION, DASHBOARD_PATH } from "../src/lib/product";
 import type { Definition } from "../src/lib/definition-types";
+import { getLocale, subscribeLocale, type Locale } from "../src/lib/i18n";
+import { initializeLocale, setLocale } from "../src/lib/locale-client";
+await initializeLocale().catch(() => {});
 const byId = <T extends HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const say = (message: string) => {
@@ -21,7 +26,39 @@ byId("words").onclick = () => open("words");
 byId("settings").onclick = () => open("settings");
 byId("help").onclick = () => open("start");
 byId("privacy").onclick = () => {
-  void chrome.tabs.create({ url: chrome.runtime.getURL("privacy.html") });
+  void chrome.tabs.create({
+    url: chrome.runtime.getURL(
+      getLocale() === "ko" ? "privacy.ko.html" : "privacy.html",
+    ),
+  });
+};
+function renderLanguage() {
+  for (const element of document.querySelectorAll<HTMLElement>(
+    "[data-en][data-ko]",
+  ))
+    element.textContent = tr(element.dataset.en!, element.dataset.ko!);
+  byId<HTMLSelectElement>("language").value = getLocale();
+  byId("language").setAttribute("aria-label", tr("Language", "언어"));
+}
+renderLanguage();
+subscribeLocale(() => {
+  renderLanguage();
+  byId("status").textContent = "";
+  byId("dictionary-result").replaceChildren();
+  void refresh().catch(() => {});
+});
+byId<HTMLSelectElement>("language").onchange = (event) => {
+  void setLocale((event.target as HTMLSelectElement).value as Locale).catch(
+    () => {
+      renderLanguage();
+      say(
+        tr(
+          "Could not save language. Try again.",
+          "언어를 저장하지 못했습니다. 다시 시도해 주세요.",
+        ),
+      );
+    },
+  );
 };
 byId("version").textContent = "v" + VERSION;
 async function refresh() {
@@ -36,13 +73,24 @@ async function refresh() {
         (await chrome.permissions.contains({ origins: [origin] }))));
   once.disabled = !origin;
   always.disabled = !origin || allowed;
-  always.textContent = allowed ? "자동 사용 중 ✓" : "이 사이트에서 항상 사용";
+  always.textContent = allowed
+    ? tr("Automatic use enabled ✓", "자동 사용 중 ✓")
+    : tr("Always use on this site", "이 사이트에서 항상 사용");
   disable.hidden = !origin || !settings.siteOrigins.includes(origin) || all;
   byId("site-state").textContent = !origin
-    ? "이 화면에서는 아래 검색창을 사용하세요. 일반 웹페이지에서 커서 사전을 켤 수 있습니다."
+    ? tr(
+        "Use the search box below on this screen. Enable the cursor dictionary on a regular webpage.",
+        "이 화면에서는 아래 검색창을 사용하세요. 일반 웹페이지에서 커서 사전을 켤 수 있습니다.",
+      )
     : allowed
-      ? "단어 위에서 단축키를 누르면 바로 뜻이 나옵니다."
-      : "먼저 이번 탭에서 사용해 보세요. 자동 사용은 선택할 수 있어요.";
+      ? tr(
+          "Point at a word and press the shortcut to see its definition.",
+          "단어 위에서 단축키를 누르면 바로 뜻이 나옵니다.",
+        )
+      : tr(
+          "Try it on this tab first. Automatic use is optional.",
+          "먼저 이번 탭에서 사용해 보세요. 자동 사용은 선택할 수 있어요.",
+        );
 }
 function run(action: () => Promise<void>) {
   if (busy) return;
@@ -57,14 +105,23 @@ function run(action: () => Promise<void>) {
   });
   void action()
     .catch((error) =>
-      say(error instanceof Error ? error.message : "처리하지 못했습니다."),
+      say(
+        error instanceof Error
+          ? error.message
+          : tr("Could not complete the request.", "처리하지 못했습니다."),
+      ),
     )
     .finally(async () => {
       controls.forEach((control) => {
         control.disabled = false;
       });
       await refresh().catch(() =>
-        say("확장 설정을 읽지 못했습니다. 다시 열어 주세요."),
+        say(
+          tr(
+            "Could not read extension settings. Close and reopen the popup.",
+            "확장 설정을 읽지 못했습니다. 다시 열어 주세요.",
+          ),
+        ),
       );
       busy = false;
     });
@@ -77,16 +134,30 @@ async function activate() {
   });
   if (!result?.ok)
     throw new Error(
-      result?.error ?? "웹페이지를 새로고침한 뒤 다시 시도해 주세요.",
+      result?.error ??
+        tr(
+          "Refresh the webpage and try again.",
+          "웹페이지를 새로고침한 뒤 다시 시도해 주세요.",
+        ),
     );
-  say("준비됐어요. 이 창을 닫고 단어 위로 커서를 옮긴 뒤 단축키를 누르세요.");
+  say(
+    tr(
+      "Ready. Close this popup, move the pointer to a word and press the shortcut.",
+      "준비됐어요. 이 창을 닫고 단어 위로 커서를 옮긴 뒤 단축키를 누르세요.",
+    ),
+  );
 }
 once.onclick = () => run(activate);
 always.onclick = () =>
   run(async () => {
     if (!origin) return;
     if (!(await chrome.permissions.request({ origins: [origin] }))) {
-      say("허용하지 않았습니다. 이번 탭에서 사용은 계속 이용할 수 있어요.");
+      say(
+        tr(
+          "Access was not granted. You can still use it on this tab.",
+          "허용하지 않았습니다. 이번 탭에서 사용은 계속 이용할 수 있어요.",
+        ),
+      );
       return;
     }
     const settings = await getSettings();
@@ -108,7 +179,10 @@ disable.onclick = () =>
       await chrome.permissions.remove({ origins: [origin] });
     await chrome.runtime.sendMessage({ type: "GLIMPSE_STOP" });
     say(
-      "자동 사용을 해제했습니다. 다른 허용 사이트는 새로고침으로 다시 사용할 수 있습니다.",
+      tr(
+        "Automatic use disabled. Refresh other allowed sites to use Glimpse there again.",
+        "자동 사용을 해제했습니다. 다른 허용 사이트는 새로고침으로 다시 사용할 수 있습니다.",
+      ),
     );
   });
 byId("dictionary-form").onsubmit = (event) => {
@@ -116,11 +190,14 @@ byId("dictionary-form").onsubmit = (event) => {
   const word = byId<HTMLInputElement>("dictionary-word").value.trim(),
     result = byId("dictionary-result");
   if (word.length > 80 || !/^[A-Za-z]+(?:['’\-][A-Za-z]+)*$/.test(word)) {
-    result.textContent = "영어 단어 하나를 입력해 주세요.";
+    result.textContent = tr(
+      "Enter one English word.",
+      "영어 단어 하나를 입력해 주세요.",
+    );
     return;
   }
   run(async () => {
-    result.textContent = "뜻을 찾고 있어요…";
+    result.textContent = tr("Looking up the word…", "뜻을 찾고 있어요…");
     const definition: Definition = await chrome.runtime.sendMessage({
       type: "GLIMPSE_DEFINE",
       word,
@@ -134,15 +211,23 @@ byId("dictionary-form").onsubmit = (event) => {
       definition.senses
         ?.slice(0, 3)
         .map((sense) =>
-          [sense.partOfSpeech, sense.meaning].filter(Boolean).join(" · "),
+          [definitionLabel(sense.partOfSpeech), sense.meaning]
+            .filter(Boolean)
+            .join(" · "),
         )
         .join("\n") ?? definition.meaning;
     const info = document.createElement("small");
     info.textContent = [
       definition.matchedBy === "inflection"
-        ? `원형 ${(definition.lemmas ?? [definition.lemma]).filter((item) => item?.toLowerCase() !== word.toLowerCase()).join(", ")}`
+        ? tr(
+            "Base form: {0}",
+            "원형 {0}",
+            (definition.lemmas ?? [definition.lemma])
+              .filter((item) => item?.toLowerCase() !== word.toLowerCase())
+              .join(", "),
+          )
         : "",
-      definition.source,
+      definitionLabel(definition.source),
       definition.license,
     ]
       .filter(Boolean)
@@ -151,7 +236,7 @@ byId("dictionary-form").onsubmit = (event) => {
     for (const source of definition.sourceLinks ?? []) {
       const link = document.createElement("a");
       link.href = source.url;
-      link.textContent = source.label + " 출처";
+      link.textContent = source.label + tr("Source", "출처");
       link.target = "_blank";
       link.rel = "noreferrer noopener";
       result.append(link);
@@ -159,7 +244,7 @@ byId("dictionary-form").onsubmit = (event) => {
     if (definition.status === "found") {
       const save = document.createElement("button");
       save.className = "save-word";
-      save.textContent = "단어장에 저장";
+      save.textContent = tr("Save word", "단어장에 저장");
       save.onclick = () =>
         run(async () => {
           const reply = await chrome.runtime.sendMessage({
@@ -167,12 +252,18 @@ byId("dictionary-form").onsubmit = (event) => {
             word,
           });
           if (!reply?.ok)
-            throw new Error(reply?.error ?? "저장하지 못했습니다.");
-          save.textContent = "단어장에 저장됨 ✓";
+            throw new Error(
+              reply?.error ??
+                tr("Could not save the word.", "저장하지 못했습니다."),
+            );
+          save.textContent = tr("Word saved ✓", "단어장에 저장됨 ✓");
           say(
             reply.value.created
-              ? "단어와 뜻만 이 기기에 저장했습니다."
-              : "이미 저장한 단어입니다.",
+              ? tr(
+                  "Saved the word and definition on this device.",
+                  "단어와 뜻만 이 기기에 저장했습니다.",
+                )
+              : tr("This word is already saved.", "이미 저장한 단어입니다."),
           );
         });
       result.append(document.createElement("br"), save);
@@ -184,10 +275,16 @@ run(async () => {
   origin = sitePattern(tab?.url);
   byId("site").textContent = origin
     ? new URL(tab!.url!).hostname
-    : "직접 단어 조회";
+    : tr("Look up a word", "직접 단어 조회");
   const commands = await chrome.commands.getAll();
   const shortcut = commands.find((c) => c.name === "lookup-word")?.shortcut;
-  byId("shortcut").textContent = shortcut || "단축키 미설정";
+  byId("shortcut").textContent =
+    shortcut || tr("No shortcut set", "단축키 미설정");
   if (!shortcut)
-    say("단축키가 비어 있습니다. 설정에서 Chrome 단축키를 지정해 주세요.");
+    say(
+      tr(
+        "No shortcut is assigned. Open Settings to set one in Chrome.",
+        "단축키가 비어 있습니다. 설정에서 Chrome 단축키를 지정해 주세요.",
+      ),
+    );
 });

@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { median, type Point } from "./selection";
 export type CalibrationRow = {
   features: number[];
@@ -68,7 +69,10 @@ function solve(matrix: number[][], rhs: number[]): number[] {
     [a[i], a[pivot]] = [a[pivot], a[i]];
     if (Math.abs(a[i][i]) < 1e-10)
       throw new Error(
-        "보정 데이터가 충분히 다양하지 않습니다. 다시 보정해 주세요.",
+        tr(
+          "Calibration data is not diverse enough. Please recalibrate.",
+          "보정 데이터가 충분히 다양하지 않습니다. 다시 보정해 주세요.",
+        ),
       );
     const divisor = a[i][i];
     for (let j = i; j <= n; j++) a[i][j] /= divisor;
@@ -107,7 +111,10 @@ export function trainRidge(
   }));
   if (rows.length < 20)
     throw new Error(
-      "보정 샘플이 부족합니다. 조명과 얼굴 위치를 확인해 주세요.",
+      tr(
+        "Not enough calibration samples. Check lighting and face position.",
+        "보정 샘플이 부족합니다. 조명과 얼굴 위치를 확인해 주세요.",
+      ),
     );
   const n = rows.length,
     d = rows[0].features.length;
@@ -116,7 +123,9 @@ export function trainRidge(
       (r) => r.features.length !== d || !r.features.every(Number.isFinite),
     )
   )
-    throw new Error("유효하지 않은 보정 데이터입니다.");
+    throw new Error(
+      tr("Invalid calibration data.", "유효하지 않은 보정 데이터입니다."),
+    );
   const means = Array.from(
     { length: d },
     (_, i) => rows.reduce((s, r) => s + r.features[i], 0) / n,
@@ -126,7 +135,10 @@ export function trainRidge(
   );
   if (scales.every((s) => s < 0.0001))
     throw new Error(
-      "시선의 변화가 감지되지 않았습니다. 머리를 고정하고 각 점을 바라봐 주세요.",
+      tr(
+        "No gaze movement detected. Hold your head still and look at each point.",
+        "시선의 변화가 감지되지 않았습니다. 머리를 고정하고 각 점을 바라봐 주세요.",
+      ),
     );
   const safeScales = scales.map((s) => Math.max(0.0001, s));
   const x = rows.map((r) => [
@@ -212,7 +224,12 @@ export function selectModel(rows: CalibrationRow[]): {
   const groups = groupedKeys(rows),
     folds = Math.min(5, groups.length);
   if (folds < 3)
-    throw new Error("서로 다른 화면 위치의 학습 데이터가 부족합니다.");
+    throw new Error(
+      tr(
+        "Not enough training data from different screen positions.",
+        "서로 다른 화면 위치의 학습 데이터가 부족합니다.",
+      ),
+    );
   const assignments = new Map(groups.map((g, i) => [g, i % folds]));
   const candidates: ModelSelection["candidates"] = [];
   const modes: ("linear" | "quadratic")[] =
