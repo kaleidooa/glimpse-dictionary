@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extensionName__",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "homepage_url": "https://github.com/kaleidooa/glimpse-dictionary",
   "description": "__MSG_extensionDescription__",
   "minimum_chrome_version": "120",
@@ -12,7 +12,6 @@
     "128": "icons/icon128.png"
   },
   "permissions": ["activeTab", "scripting", "storage"],
-  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -37,5 +36,6 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self' https://api.dictionaryapi.dev;"
   },
-  "default_locale": "en"
+  "default_locale": "en",
+  "host_permissions": ["http://*/*", "https://*/*"]
 }

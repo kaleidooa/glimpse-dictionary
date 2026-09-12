@@ -32,6 +32,31 @@ it("finds a word split across formatting tags without changing DOM or selection"
   expect(p.innerHTML).toBe(before);
   expect(getSelection()?.toString()).toBe("");
 });
+it("keeps all wrapped-word fragments for marking and removes duplicate inline boxes", () => {
+  document.body.innerHTML = "<p>well-known</p>";
+  const second = {
+    ...rect,
+    left: 10,
+    right: 60,
+    top: 60,
+    bottom: 80,
+    width: 50,
+  };
+  vi.mocked(Range.prototype.getClientRects).mockReturnValue([
+    rect,
+    { ...rect },
+    second,
+  ] as unknown as DOMRectList);
+  const hit = wordAtCaret(
+    document.querySelector("p")!.firstChild as Text,
+    2,
+    70,
+    40,
+  );
+  expect(hit?.word).toBe("well-known");
+  expect(hit?.rects).toEqual([rect, second]);
+  expect(hit?.range.toString()).toBe("well-known");
+});
 it("handles apostrophes and hyphens and does not merge block boundaries", () => {
   document.body.innerHTML =
     "<div><p>don<span>’</span>t well-known</p><p>another</p></div>";

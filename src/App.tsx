@@ -246,8 +246,8 @@ export default function App() {
                 </li>
                 <li>
                   {tr(
-                    "Enable the site from the extension popup",
-                    "확장 아이콘에서 사이트 사용 켜기",
+                    "Point at a word on any regular webpage and press Alt+Shift+D",
+                    "일반 웹페이지의 단어 위에서 Alt+Shift+D 누르기",
                   )}
                 </li>
               </ol>

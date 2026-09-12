@@ -12,7 +12,7 @@ export async function getSettings(): Promise<Settings> {
   ]);
   return {
     online: data.online === true,
-    allSites: data.allSites === true,
+    allSites: data.allSites !== false,
     siteOrigins: Array.isArray(data.siteOrigins)
       ? data.siteOrigins.filter(
           (v: unknown): v is string =>

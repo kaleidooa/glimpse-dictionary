@@ -958,7 +958,9 @@ kbd {
   white-space: nowrap;
 }
 .reading-text .selected {
-  background: #e2ead6;
+  background: rgba(112, 148, 99, 0.12);
+  box-shadow: inset 0 -1px rgba(92, 128, 79, 0.48);
+  border-radius: 3px;
 }
 .reader-footer {
   border-top: 1px solid #eaede4;

@@ -14,7 +14,7 @@ You can delete individual words, download CSV or JSON, and import JSON locally. 
 
 ## Optional online lookup
 
-Online lookup is off by default. If you enable it and grant access, missing English words are sent individually over HTTPS to `api.dictionaryapi.dev`. Glimpse omits sentences, page URLs, cookies and referrers. The provider can see your IP address and request time; its server handling is outside this project's control. See [Free Dictionary API](https://dictionaryapi.dev/).
+Online lookup is off by default. If enabled and Chrome permits access, missing English words are sent individually over HTTPS to `api.dictionaryapi.dev`. Glimpse omits sentences, page URLs, cookies and referrers. The provider can see your IP address and request time; its server handling is outside this project's control. See [Free Dictionary API](https://dictionaryapi.dev/).
 
 The connection check sends the fixed word `serendipity`. Saving an online-only word may repeat its lookup. Turning the option off stops further online queries.
 
@@ -22,7 +22,9 @@ The connection check sends the fixed word `serendipity`. Saving an online-only w
 
 Interface language, online lookup and allowed-site preferences stay on the device. The default interface language is English.
 
-`activeTab` and `scripting` allow lookup on a tab you activate. Automatic use requests access to the sites you choose, or all HTTP/HTTPS sites if you enable that option. Turning off all-site access also clears the site list and online setting and stops active readers. Saved words remain.
+The extension requests access to HTTP/HTTPS websites at installation. Automatic use is on by default, so each page is ready for the first shortcut. Page listeners keep only the latest pointer position; they do not scan the page or look up words until you ask. `activeTab` and `scripting` also support activation from the extension popup.
+
+Turning off automatic use on all sites stops active readers and clears the individual site list. You can then enable individual sites from the popup. Saved words and the online dictionary setting remain unchanged. This switch does not revoke Chrome's host permissions; manage those in Chrome's extension settings.
 
 ## Experimental eye lab
 

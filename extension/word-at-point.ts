@@ -1,4 +1,9 @@
-export type Hit = { word: string; rect: DOMRect };
+export type Hit = {
+  word: string;
+  rect: DOMRect;
+  rects: DOMRect[];
+  range: Range;
+};
 const ignored =
   'input,textarea,select,button,[contenteditable]:not([contenteditable="false"]),[role="textbox"],script,style,noscript,svg,canvas,iframe,object,embed,[data-glimpse-ui]';
 const wordPattern = /[A-Za-z]+(?:['’\-][A-Za-z]+)*/g;
@@ -105,7 +110,10 @@ export function wordAtCaret(
     const range = document.createRange();
     range.setStart(first.node, start - first.start);
     range.setEnd(last.node, end - last.start);
-    const rect = Array.from(range.getClientRects()).find(
+    const rects = Array.from(range.getClientRects()).filter(
+      (r) => r.width > 0 && r.height > 0,
+    );
+    const rect = rects.find(
       (r) =>
         r.width > 0 &&
         r.height > 0 &&
@@ -114,7 +122,22 @@ export function wordAtCaret(
         y >= r.top &&
         y <= r.bottom,
     );
-    if (rect) return { word: match[0], rect };
+    if (rect) {
+      // Inline element and text boxes can overlap; do not stack the highlight tint.
+      const fragments = rects.filter(
+        (r, i) =>
+          !rects.some(
+            (other, j) =>
+              j !== i &&
+              other.left <= r.left &&
+              other.right >= r.right &&
+              other.top <= r.top &&
+              other.bottom >= r.bottom &&
+              (j < i || other.width > r.width || other.height > r.height),
+          ),
+      );
+      return { word: match[0], rect, rects: fragments, range };
+    }
   }
   return null;
 }

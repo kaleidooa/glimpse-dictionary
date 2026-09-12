@@ -29,6 +29,19 @@ export function createOverlay(
     }))
       host.style.setProperty(name, value, "important");
     const shadow = host.attachShadow({ mode: "closed" });
+    const markers = document.createElement("div");
+    markers.setAttribute("aria-hidden", "true");
+    for (const rect of hit?.rects ?? []) {
+      const mark = document.createElement("div");
+      mark.className = "word-marker";
+      Object.assign(mark.style, {
+        left: `${rect.left - 1}px`,
+        top: `${rect.top}px`,
+        width: `${rect.width + 2}px`,
+        height: `${rect.height}px`,
+      });
+      markers.append(mark);
+    }
     const css = document.createElement("style");
     css.textContent = `:host{color-scheme:light}*{box-sizing:border-box}.card{position:fixed;width:min(320px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;padding:20px;background:#fffdf7;color:#263d32;border:1px solid #dce2d4;border-radius:16px;box-shadow:0 12px 44px #15302226;font:14px/1.65 system-ui,'Malgun Gothic',sans-serif;pointer-events:auto;text-align:left;word-break:normal;overflow-wrap:anywhere}.title{display:flex;gap:10px;align-items:start}.word{font:bold 26px/1.2 Georgia,serif;flex:1}button{border:0;background:transparent;color:#53695a;font:20px/1 system-ui;cursor:pointer;padding:2px 4px}p{margin:12px 0}small{display:block;color:#6a7d6f;font-size:11px}button:focus-visible{outline:2px solid #326a47;border-radius:3px}`;
     const card = document.createElement("section");
@@ -36,6 +49,8 @@ export function createOverlay(
       ".card{width:min(360px,calc(100vw - 24px))}.lemma{color:#708163;font-size:11px;margin-top:8px}.sense{padding:9px 0;border-bottom:1px solid #e9ecdf;line-height:1.65}.pos{color:#829273;font-size:10px;margin-right:6px}.senses{margin:10px 0 15px}.more{font:11px system-ui;padding:9px 0;color:#587a42}a{color:inherit;text-decoration:underline;text-underline-offset:2px}a:focus-visible{outline:2px solid #326a47;border-radius:3px}";
     css.textContent +=
       ".card{font-size:15px}.lemma,.pos,small,.more{font-size:12px;color:#52634b}.save{font:13px/1.5 system-ui;border:1px solid #b8c7ab;border-radius:7px;padding:7px 10px;color:#304d31;background:#f0f5e9;margin:12px 0 0}.save:disabled{cursor:default;opacity:.7}.save-note{font-size:12px;color:#52634b;margin:6px 0 0}.save-note:empty{display:none}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}";
+    css.textContent +=
+      ".word-marker{position:fixed;pointer-events:none;background:rgba(112,148,99,.12);border-bottom:1px solid rgba(92,128,79,.48);border-radius:3px;box-sizing:border-box}@media(forced-colors:active){.word-marker{background:transparent;border-bottom-color:Highlight}}";
     card.className = "card";
     card.setAttribute("role", "status");
     card.setAttribute("aria-live", "polite");
@@ -63,8 +78,8 @@ export function createOverlay(
       const sheet = new CSSStyleSheet();
       sheet.replaceSync(css.textContent);
       shadow.adoptedStyleSheets = [sheet];
-      shadow.append(card);
-    } else shadow.append(css, card);
+      shadow.append(markers, card);
+    } else shadow.append(css, markers, card);
     document.documentElement.append(host);
     const position = () => {
       const rect = card.getBoundingClientRect();
@@ -75,6 +90,32 @@ export function createOverlay(
     position();
     return (definition: Definition) => {
       if (revision !== token || !host?.isConnected) return;
+      if (
+        hit &&
+        (!hit.range.startContainer.isConnected ||
+          hit.range.toString() !== hit.word)
+      ) {
+        close();
+        return;
+      }
+      if (hit) {
+        const current = Array.from(hit.range.getClientRects());
+        if (
+          hit.rects.some(
+            (old) =>
+              !current.some(
+                (rect) =>
+                  Math.abs(rect.left - old.left) < 1 &&
+                  Math.abs(rect.top - old.top) < 1 &&
+                  Math.abs(rect.width - old.width) < 1 &&
+                  Math.abs(rect.height - old.height) < 1,
+              ),
+          )
+        ) {
+          close();
+          return;
+        }
+      }
       lemma.textContent = [
         definition.matchedBy === "inflection"
           ? tr(

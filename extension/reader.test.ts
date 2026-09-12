@@ -170,3 +170,67 @@ it("saves only after the save button is explicitly clicked and does not resurrec
   expect(save).toHaveBeenCalledTimes(1);
   expect(document.querySelector("[data-glimpse-ui]")).toBeNull();
 });
+it("marks the queried word while loading without changing page text or native selection", async () => {
+  const p = document.querySelector("p")!;
+  const original = p.innerHTML;
+  const range = document.createRange();
+  range.setStart(p.firstChild!, 0);
+  range.setEnd(p.firstChild!, 3);
+  getSelection()!.removeAllRanges();
+  getSelection()!.addRange(range);
+  let resolve!: (definition: Definition) => void;
+  reader = installReader(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  point();
+  const pending = reader.trigger();
+  const mark = roots.at(-1)!.querySelector<HTMLElement>(".word-marker")!;
+  expect(mark.style.left).toBe("19px");
+  expect(mark.style.width).toBe("162px");
+  expect(mark.parentElement?.getAttribute("aria-hidden")).toBe("true");
+  expect(p.innerHTML).toBe(original);
+  expect(getSelection()?.toString()).toBe("cur");
+  resolve(response);
+  await pending;
+  expect(mark.isConnected).toBe(true);
+  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  expect(mark.isConnected).toBe(false);
+  expect(getSelection()?.toString()).toBe("cur");
+  getSelection()!.removeAllRanges();
+});
+it.each(["text", "position"])(
+  "removes a stale marker when the word's %s changes while lookup is pending",
+  async (change) => {
+    let resolve!: (definition: Definition) => void;
+    reader = installReader(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    point();
+    const pending = reader.trigger();
+    if (change === "text")
+      document.querySelector("p")!.textContent = "replaced";
+    else
+      Object.defineProperty(Range.prototype, "getClientRects", {
+        configurable: true,
+        value: () => [
+          {
+            left: 20,
+            top: 120,
+            width: 160,
+            height: 30,
+            right: 180,
+            bottom: 150,
+          },
+        ],
+      });
+    resolve(response);
+    await pending;
+    expect(document.querySelector("[data-glimpse-ui]")).toBeNull();
+  },
+);

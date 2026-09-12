@@ -59,7 +59,7 @@ export function Dashboard() {
   const [shown, setShown] = useState(50);
   const [settings, setSettings] = useState<Settings>({
     online: false,
-    allSites: false,
+    allSites: true,
     siteOrigins: [],
   });
   const [shortcut, setShortcut] = useState("Alt + Shift + D");
@@ -148,19 +148,13 @@ export function Dashboard() {
   async function toggleOnline(enabled: boolean) {
     if (
       enabled &&
-      !(await chrome.permissions.request({ origins: [API_ORIGIN] }))
+      !(await chrome.permissions.contains({ origins: [API_ORIGIN] }))
     )
       return tr(
         "Access was not granted. You can still use the local dictionary.",
         "접근을 허용하지 않았습니다. 기기 사전은 계속 사용할 수 있어요.",
       );
     await chrome.storage.local.set({ online: enabled });
-    if (
-      !enabled &&
-      !settings.allSites &&
-      !settings.siteOrigins.includes(API_ORIGIN)
-    )
-      await chrome.permissions.remove({ origins: [API_ORIGIN] });
     return enabled
       ? tr(
           "Online English dictionary enabled. Only missing words will be sent.",
@@ -171,25 +165,27 @@ export function Dashboard() {
   async function toggleAll(enabled: boolean) {
     if (
       enabled &&
-      !(await chrome.permissions.request({ origins: WEB_ORIGINS }))
+      !(await chrome.permissions.contains({ origins: WEB_ORIGINS }))
     )
-      return tr("Access was not granted.", "접근을 허용하지 않았습니다.");
+      return tr(
+        "Allow site access in Chrome's extension settings first.",
+        "먼저 Chrome 확장 관리에서 사이트 접근을 허용해 주세요.",
+      );
     const update: Partial<Settings> = enabled
       ? { allSites: true }
-      : { allSites: false, siteOrigins: [], online: false };
+      : { allSites: false, siteOrigins: [] };
     await chrome.storage.local.set(update);
     if (!enabled) {
-      await chrome.permissions.remove({ origins: WEB_ORIGINS });
       await chrome.runtime.sendMessage({ type: "GLIMPSE_STOP" });
     }
     return enabled
       ? tr(
-          "Automatic use enabled. Refresh webpages that are already open.",
-          "자동 사용을 켰습니다. 이미 열어 둔 웹페이지는 새로고침해 주세요.",
+          "Automatic use enabled on regular websites.",
+          "일반 웹사이트에서 자동 사용을 켰습니다.",
         )
       : tr(
-          "All-site access, the site list and online lookup have been cleared.",
-          "전체 사이트 권한과 기존 사이트 목록, 보조 사전 설정을 해제했습니다.",
+          "Automatic use stopped and the site list was cleared. Chrome permissions and saved words are unchanged.",
+          "자동 사용을 멈추고 사이트 목록을 비웠습니다. Chrome 권한과 저장한 단어는 유지됩니다.",
         );
   }
   return (
@@ -330,14 +326,14 @@ export function Dashboard() {
                       <div>
                         <strong>
                           {tr(
-                            "Enable Glimpse on the page",
-                            "확장 아이콘에서 이 사이트 켜기",
+                            "Move the pointer to a word",
+                            "단어 위로 커서 옮기기",
                           )}
                         </strong>
                         <p>
                           {tr(
-                            "Start with “Use on this tab”. Enable automatic use for sites you read often.",
-                            "‘이번 탭에서 사용’으로 먼저 써 보고, 자주 읽는 사이트만 자동 사용을 켜세요.",
+                            "Glimpse is ready on regular websites by default. No need to open the extension popup first.",
+                            "일반 웹사이트에서는 기본으로 준비됩니다. 확장 아이콘을 먼저 누를 필요가 없어요.",
                           )}{" "}
                         </p>
                       </div>
@@ -803,8 +799,8 @@ export function Dashboard() {
                     </strong>
                     <p>
                       {tr(
-                        "Works on regular HTTP/HTTPS sites. Turning this off also clears the site list and online dictionary setting.",
-                        "일반 HTTP/HTTPS 사이트에서 작동합니다. 끄면 전체 권한과 기존 사이트 목록, 보조 사전 설정도 해제합니다.",
+                        "On by default for HTTP/HTTPS pages. Turn it off to choose individual sites. This controls automatic use; browser permissions are managed in Chrome.",
+                        "HTTP/HTTPS 페이지에서 기본으로 켜져 있습니다. 끄면 사이트를 개별 선택할 수 있습니다. 자동 실행 여부를 바꾸는 설정이며, 브라우저 권한은 Chrome에서 관리합니다.",
                       )}{" "}
                     </p>
                   </div>
@@ -818,6 +814,20 @@ export function Dashboard() {
                   />
                 </label>
                 <div className="site-list">
+                  {packaged && (
+                    <button
+                      onClick={() =>
+                        void chrome.tabs.create({
+                          url: "chrome://extensions/?id=" + chrome.runtime.id,
+                        })
+                      }
+                    >
+                      {tr(
+                        "Manage access in Chrome ↗",
+                        "Chrome에서 접근 권한 관리 ↗",
+                      )}
+                    </button>
+                  )}
                   <h3>{tr("Allowed sites", "개별 허용 사이트")}</h3>
                   {settings.siteOrigins.length ? (
                     settings.siteOrigins.map((origin) => (
@@ -832,16 +842,12 @@ export function Dashboard() {
                                   (s) => s !== origin,
                                 ),
                               });
-                              if (!(origin === API_ORIGIN && settings.online))
-                                await chrome.permissions.remove({
-                                  origins: [origin],
-                                });
                               await chrome.runtime.sendMessage({
                                 type: "GLIMPSE_STOP",
                               });
                               return tr(
-                                "Site access removed. Refresh other allowed sites to use Glimpse there again.",
-                                "사이트 접근을 해제했습니다. 다른 허용 사이트는 새로고침으로 다시 사용할 수 있습니다.",
+                                "Automatic use stopped on this site.",
+                                "이 사이트에서 자동 사용을 멈췄습니다.",
                               );
                             })
                           }
@@ -853,8 +859,8 @@ export function Dashboard() {
                   ) : (
                     <p>
                       {tr(
-                        "No allowed sites. Add one from the extension popup on a webpage.",
-                        "허용한 사이트가 없습니다. 읽던 페이지의 확장 아이콘에서 추가하세요.",
+                        "No individual sites selected. When all-site mode is off, add sites from the extension popup.",
+                        "개별 선택한 사이트가 없습니다. 전체 사이트 모드를 끈 경우 확장 아이콘에서 사이트를 추가하세요.",
                       )}{" "}
                     </p>
                   )}

@@ -6,7 +6,7 @@ import {
   validWord,
   unavailable,
 } from "./dictionary";
-import { getSettings, WEB_ORIGINS } from "./settings";
+import { getSettings, WEB_ORIGINS, sitePattern } from "./settings";
 import { VocabularyStore, VOCABULARY_KEY } from "../src/lib/vocabulary";
 import { applyLocale, asLocale, LOCALE_KEY } from "../src/lib/i18n";
 const localeReady = chrome.storage.local
@@ -29,10 +29,11 @@ void chrome.storage.local
   );
 
 let syncQueue = Promise.resolve();
-function syncScripts() {
+function syncScripts(refreshTabs = false) {
   syncQueue = syncQueue
     .catch(() => {})
     .then(async () => {
+      if (refreshTabs) await stopReaders();
       const settings = await getSettings();
       const matches: string[] = [];
       if (
@@ -52,7 +53,7 @@ function syncScripts() {
           id: "glimpse-reader",
           matches,
           js: ["content.js"],
-          runAt: "document_idle",
+          runAt: "document_start",
           allFrames: true,
           persistAcrossSessions: true,
         };
@@ -62,8 +63,33 @@ function syncScripts() {
         await chrome.scripting.unregisterContentScripts({
           ids: ["glimpse-reader"],
         });
+      if (refreshTabs && matches.length) {
+        const tabs = await chrome.tabs.query({ url: WEB_ORIGINS });
+        await Promise.allSettled(
+          tabs
+            .filter((tab) => {
+              const origin = sitePattern(tab.url);
+              return (
+                tab.id !== undefined &&
+                origin &&
+                (matches.includes(origin) ||
+                  matches.includes(
+                    origin.startsWith("https:") ? "https://*/*" : "http://*/*",
+                  ))
+              );
+            })
+            .map((tab) => inject(tab.id!)),
+        );
+      }
     });
   return syncQueue;
+}
+function scheduleSync(refreshTabs = false) {
+  void syncScripts(refreshTabs).catch(() =>
+    console.warn(
+      "Glimpse could not update automatic site access. Check Chrome's extension settings.",
+    ),
+  );
 }
 async function inject(tabId: number) {
   try {
@@ -126,23 +152,23 @@ chrome.commands.onCommand.addListener((name, tab) => {
   if (name === "lookup-word") void command(tab);
 });
 chrome.runtime.onInstalled.addListener((details) => {
-  void syncScripts();
+  scheduleSync(true);
   if (details.reason === "install")
     void chrome.tabs.create({
       url: chrome.runtime.getURL("lab/dashboard.html#start"),
     });
 });
 chrome.runtime.onStartup.addListener(() => {
-  void syncScripts();
+  scheduleSync();
 });
 chrome.permissions.onAdded.addListener(() => {
-  void syncScripts();
+  scheduleSync(true);
 });
 chrome.permissions.onRemoved.addListener((permissions) => {
   const onlyDictionary =
     permissions.origins?.length &&
     permissions.origins.every((origin) => origin === API_ORIGIN);
-  void (onlyDictionary ? syncScripts() : stopReaders().then(syncScripts));
+  scheduleSync(!onlyDictionary);
 });
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && LOCALE_KEY in changes) {
@@ -162,9 +188,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
   if (
     area === "local" &&
-    ["online", "allSites", "siteOrigins"].some((key) => key in changes)
+    ["allSites", "siteOrigins"].some((key) => key in changes)
   )
-    void syncScripts();
+    scheduleSync(true);
 });
 async function stopReaders() {
   const tabs = await chrome.tabs.query({});
@@ -304,8 +330,7 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
     return true;
   }
   if (message.type === "GLIMPSE_STOP") {
-    void stopReaders()
-      .then(syncScripts)
+    void syncScripts(true)
       .then(() => reply({ ok: true }))
       .catch(() => reply({ ok: false }));
     return true;

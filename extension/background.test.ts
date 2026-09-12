@@ -15,7 +15,7 @@ let api: any, settings: Record<string, any>, permissions: Set<string>;
 beforeEach(async () => {
   vi.resetModules();
   settings = {};
-  permissions = new Set();
+  permissions = new Set(["http://*/*", "https://*/*"]);
   api = {
     runtime: {
       id: "test-id",
@@ -36,7 +36,12 @@ beforeEach(async () => {
     },
     permissions: {
       contains: vi.fn(async ({ origins }: { origins: string[] }) =>
-        origins.every((o) => permissions.has(o)),
+        origins.every(
+          (o) =>
+            permissions.has(o) ||
+            (o.startsWith("https:") && permissions.has("https://*/*")) ||
+            (o.startsWith("http:") && permissions.has("http://*/*")),
+        ),
       ),
       onAdded: event(),
       onRemoved: event(),
@@ -49,7 +54,7 @@ beforeEach(async () => {
       executeScript: vi.fn(async () => []),
     },
     tabs: {
-      query: vi.fn(async () => [{ id: 7 }]),
+      query: vi.fn(async () => [{ id: 7, url: "https://example.com/" }]),
       sendMessage: vi.fn(async () => ({ ready: true })),
       create: vi.fn(async () => {}),
     },
@@ -106,6 +111,7 @@ it("shares only the interface language with content scripts and broadcasts langu
   expect(fetch).not.toHaveBeenCalled();
 });
 it("requires both the online setting and host permission for external dictionary traffic", async () => {
+  permissions.clear();
   settings.online = true;
   expect(
     (await message({ type: "GLIMPSE_DEFINE", word: "serendipity" })).source,
@@ -150,6 +156,10 @@ it("opens first-use help only on install and does not register scripts when a wo
   expect(api.tabs.create).toHaveBeenCalledWith({
     url: "chrome-extension://test-id/lab/dashboard.html#start",
   });
+  await message(
+    { type: "GLIMPSE_STOP" },
+    { id: "test-id", url: "chrome-extension://test-id/popup.html" },
+  );
   api.scripting.getRegisteredContentScripts.mockClear();
   api.storage.onChanged.fire({ "glimpse.vocabulary.v1": {} }, "local");
   expect(api.scripting.getRegisteredContentScripts).not.toHaveBeenCalled();
@@ -193,6 +203,8 @@ it("falls back to the authorized top frame when a cross-origin frame rejects inj
   });
 });
 it("registers only explicitly chosen and actually granted site patterns", async () => {
+  settings.allSites = false;
+  permissions.clear();
   settings.siteOrigins = [
     "https://allowed.example/*",
     "https://denied.example/*",
@@ -211,7 +223,8 @@ it("registers only explicitly chosen and actually granted site patterns", async 
     }),
   ]);
 });
-it("registers nothing on a clean install or when only online dictionary access is granted", async () => {
+it("does not auto-inject when Chrome withholds broad site access", async () => {
+  permissions.clear();
   settings.online = true;
   permissions.add("https://api.dictionaryapi.dev/*");
   await message(
@@ -219,4 +232,76 @@ it("registers nothing on a clean install or when only online dictionary access i
     { id: "test-id", url: "chrome-extension://test-id/popup.html" },
   );
   expect(api.scripting.registerContentScripts).not.toHaveBeenCalled();
+});
+it("prepares all normal sites at document_start by default without enabling online lookup", async () => {
+  const popup = { id: "test-id", url: "chrome-extension://test-id/popup.html" };
+  await message({ type: "GLIMPSE_STOP" }, popup);
+  expect(api.scripting.registerContentScripts).toHaveBeenCalledWith([
+    expect.objectContaining({
+      matches: ["http://*/*", "https://*/*"],
+      runAt: "document_start",
+      allFrames: true,
+      persistAcrossSessions: true,
+    }),
+  ]);
+  expect(api.scripting.executeScript).toHaveBeenCalledWith({
+    target: { tabId: 7, allFrames: true },
+    files: ["content.js"],
+  });
+  expect(settings.online).toBeUndefined();
+  expect(fetch).not.toHaveBeenCalled();
+});
+it("preserves an explicit all-sites opt-out and unregisters automatic scripts", async () => {
+  settings.allSites = false;
+  settings.online = true;
+  settings["glimpse.vocabulary.v1"] = { version: 1, entries: [] };
+  api.scripting.getRegisteredContentScripts.mockResolvedValue([
+    { id: "glimpse-reader" },
+  ]);
+  await message(
+    { type: "GLIMPSE_STOP" },
+    { id: "test-id", url: "chrome-extension://test-id/popup.html" },
+  );
+  expect(api.scripting.unregisterContentScripts).toHaveBeenCalledWith({
+    ids: ["glimpse-reader"],
+  });
+  expect(api.scripting.registerContentScripts).not.toHaveBeenCalled();
+  expect(api.scripting.executeScript).not.toHaveBeenCalled();
+  expect(settings.allSites).toBe(false);
+  expect(settings.online).toBe(true);
+  expect(settings["glimpse.vocabulary.v1"]).toEqual({
+    version: 1,
+    entries: [],
+  });
+});
+it("injects already open normal pages but skips Chrome and Web Store tabs", async () => {
+  api.tabs.query.mockResolvedValue([
+    { id: 1, url: "https://example.org/article" },
+    { id: 2, url: "chrome://extensions/" },
+    { id: 3, url: "https://chromewebstore.google.com/detail/extension" },
+    { id: 4, url: "http://example.net/" },
+  ]);
+  await message(
+    { type: "GLIMPSE_STOP" },
+    { id: "test-id", url: "chrome-extension://test-id/popup.html" },
+  );
+  expect(
+    api.scripting.executeScript.mock.calls
+      .map(([call]: any[]) => call.target.tabId)
+      .sort(),
+  ).toEqual([1, 4]);
+});
+it("uses the first shortcut to look up a word when the automatic reader is ready", async () => {
+  api.commands.onCommand.fire("lookup-word", { id: 7 });
+  await vi.waitFor(() =>
+    expect(api.tabs.sendMessage).toHaveBeenCalledWith(7, {
+      type: "GLIMPSE_TRIGGER",
+    }),
+  );
+  expect(api.scripting.executeScript).not.toHaveBeenCalled();
+  expect(api.tabs.sendMessage).not.toHaveBeenCalledWith(
+    7,
+    { type: "GLIMPSE_READY" },
+    expect.anything(),
+  );
 });

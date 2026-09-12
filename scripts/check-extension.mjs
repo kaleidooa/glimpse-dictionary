@@ -8,6 +8,11 @@ const manifest = JSON.parse(
 );
 if (manifest.manifest_version !== 3) throw new Error("Manifest must be V3");
 if (
+  JSON.stringify([...manifest.host_permissions].sort()) !==
+  JSON.stringify(["http://*/*", "https://*/*"])
+)
+  throw new Error("Automatic lookup requires HTTP and HTTPS host access");
+if (
   manifest.version !==
   JSON.parse(await readFile("package.json", "utf8")).version
 )

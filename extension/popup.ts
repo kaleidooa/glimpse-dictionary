@@ -72,6 +72,7 @@ async function refresh() {
       (settings.siteOrigins.includes(origin) &&
         (await chrome.permissions.contains({ origins: [origin] }))));
   once.disabled = !origin;
+  once.hidden = allowed;
   always.disabled = !origin || allowed;
   always.textContent = allowed
     ? tr("Automatic use enabled ✓", "자동 사용 중 ✓")
@@ -151,11 +152,11 @@ once.onclick = () => run(activate);
 always.onclick = () =>
   run(async () => {
     if (!origin) return;
-    if (!(await chrome.permissions.request({ origins: [origin] }))) {
+    if (!(await chrome.permissions.contains({ origins: [origin] }))) {
       say(
         tr(
-          "Access was not granted. You can still use it on this tab.",
-          "허용하지 않았습니다. 이번 탭에서 사용은 계속 이용할 수 있어요.",
+          "Allow this site in Chrome's extension settings. You can also use it on this tab once.",
+          "Chrome 확장 관리에서 이 사이트 접근을 허용해 주세요. 이번 탭에서 한 번 사용할 수도 있습니다.",
         ),
       );
       return;
@@ -172,16 +173,11 @@ disable.onclick = () =>
     await chrome.storage.local.set({
       siteOrigins: settings.siteOrigins.filter((s) => s !== origin),
     });
-    if (
-      origin &&
-      !(origin === "https://api.dictionaryapi.dev/*" && settings.online)
-    )
-      await chrome.permissions.remove({ origins: [origin] });
     await chrome.runtime.sendMessage({ type: "GLIMPSE_STOP" });
     say(
       tr(
-        "Automatic use disabled. Refresh other allowed sites to use Glimpse there again.",
-        "자동 사용을 해제했습니다. 다른 허용 사이트는 새로고침으로 다시 사용할 수 있습니다.",
+        "Automatic use disabled on this site.",
+        "이 사이트에서 자동 사용을 해제했습니다.",
       ),
     );
   });
@@ -236,7 +232,7 @@ byId("dictionary-form").onsubmit = (event) => {
     for (const source of definition.sourceLinks ?? []) {
       const link = document.createElement("a");
       link.href = source.url;
-      link.textContent = source.label + tr("Source", "출처");
+      link.textContent = source.label + " " + tr("Source", "출처");
       link.target = "_blank";
       link.rel = "noreferrer noopener";
       result.append(link);

@@ -6,11 +6,11 @@
 
 `npm run build` builds the web demo. `npm run build:extension` replaces the generated `dist-extension` directory. On Windows, `npm run package:extension` produces a ZIP and SHA-256 file in `release/`. On other systems with PowerShell 7, run `pwsh -File scripts/package-extension.ps1`.
 
-The web demo and extension have separate storage. Site permissions work only in the installed extension. Reload both the extension and the page after changing a content script.
+The web demo and extension have separate storage. Site permissions work only in the installed extension. Reload both the extension and the page after changing a content script. HTTP/HTTPS access is required at installation. The worker dynamically registers the reader at `document_start`; automatic use defaults to on and respects an explicit off preference and Chrome's permission restrictions.
 
 ## Dictionary
 
-`extension/word-at-point.ts` finds the word under the pointer. Lookup runs in the extension worker through `src/lib/local-lexicon.ts`. The popup closes on scroll; lookups wait for 180 ms of scroll stability and ignore late results after closing.
+`extension/word-at-point.ts` finds the word under the pointer. Lookup runs in the extension worker through `src/lib/local-lexicon.ts`. A temporary overlay marks the word's text rectangles without wrapping page text or changing the browser selection. It closes with the popup on scroll; lookups wait for 180 ms of scroll stability and ignore late results after closing.
 
 | Data | Headwords | Senses | License |
 | --- | ---: | ---: | --- |
@@ -37,7 +37,7 @@ Tests cover dictionary files, inflections, text boundaries, scrolling, permissio
 
 The benchmark checks every bundled headword and records Node file-lookup timings. Reports in `reports/` exclude Chrome IPC, rendering and OS cold-cache costs. The 398-word sample was used to fix missing entries, so it is not an independent accuracy benchmark. Dictionary completeness does not establish sense accuracy.
 
-Before a release, manually check an installed extension: activate a site, use the shortcut before and after scrolling, save a word, reload, export a backup, delete the test word and restore it. Check permission revocation and an unavailable online service. Automated browser checks have covered the localhost wordbook flow; installed-extension permission/shortcut integration and native file backup/restore remain manual checks.
+For installed-extension testing, open a regular webpage and use the first shortcut without opening the extension popup. Check the word marker before and after scrolling, turn automatic use off and back on, and try Chrome's site-access restrictions. Save a word, reload, export a backup, delete the test word and restore it. Also check an unavailable online service. Automated browser checks have covered the localhost wordbook flow; installed-extension permission/shortcut integration and native file backup/restore remain manual checks.
 
 ## Eye lab
 

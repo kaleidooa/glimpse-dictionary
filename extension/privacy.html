@@ -80,7 +80,7 @@
       </p>
       <h2>Optional online lookup</h2>
       <p>
-        Online lookup is off by default. If you enable it and grant access,
+        Online lookup is off by default. If enabled and Chrome permits access,
         missing English words are sent individually over HTTPS to
         <code>api.dictionaryapi.dev</code>. Glimpse omits sentences, page URLs,
         cookies and referrers. The provider can see your IP address and request
@@ -103,11 +103,19 @@
         the device. The default interface language is English.
       </p>
       <p>
-        <code>activeTab</code> and <code>scripting</code> allow lookup on a tab
-        you activate. Automatic use requests access to the sites you choose, or
-        all HTTP/HTTPS sites if you enable that option. Turning off all-site
-        access also clears the site list and online setting and stops active
-        readers. Saved words remain.
+        The extension requests access to HTTP/HTTPS websites at installation.
+        Automatic use is on by default, so each page is ready for the first
+        shortcut. Page listeners keep only the latest pointer position; they do
+        not scan the page or look up words until you ask.
+        <code>activeTab</code> and <code>scripting</code> also support
+        activation from the extension popup.
+      </p>
+      <p>
+        Turning off automatic use on all sites stops active readers and clears
+        the individual site list. You can then enable individual sites from the
+        popup. Saved words and the online dictionary setting remain unchanged.
+        This switch does not revoke Chrome's host permissions; manage those in
+        Chrome's extension settings.
       </p>
       <h2>Experimental eye lab</h2>
       <p>
