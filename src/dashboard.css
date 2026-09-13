@@ -558,6 +558,25 @@ kbd {
   gap: 22px;
   margin: 18px 0;
 }
+.shortcut-label {
+  display: block;
+  font-size: 13px;
+  margin: 20px 0 7px;
+}
+.shortcut-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.shortcut-control input {
+  width: 180px;
+  max-width: 100%;
+  border: 1px solid #bdcbb3;
+  border-radius: 8px;
+  background: #f5f7ef;
+  padding: 10px 13px;
+  color: #304e34;
+}
 .setting-line strong {
   font-size: 15px;
 }

@@ -121,6 +121,17 @@
   color: #929b85;
   margin-top: 6px;
 }
+.shortcut-card button {
+  border: 0;
+  background: transparent;
+  color: #36592f;
+  font: 12px system-ui;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  margin-top: 8px;
+  padding: 5px;
+}
 .product-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;

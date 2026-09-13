@@ -27,8 +27,9 @@ import {
 import { REPOSITORY, VERSION } from "./lib/product";
 import { defineWord, API_ORIGIN } from "../extension/dictionary";
 import { getSettings, WEB_ORIGINS, type Settings } from "../extension/settings";
+import { useShortcut } from "./components/useShortcut";
+import { DEFAULT_SHORTCUT, SHORTCUTS_URL, shortcutLabel } from "./lib/shortcut";
 
-const packaged = location.protocol === "chrome-extension:";
 const route = () =>
   ["start", "words", "settings"].includes(location.hash.slice(1))
     ? location.hash.slice(1)
@@ -42,6 +43,7 @@ function download(text: string, filename: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export function Dashboard() {
+  const packaged = location.protocol === "chrome-extension:";
   const locale = useLocale();
   const privacyURL = packaged
     ? chrome.runtime.getURL(
@@ -62,7 +64,7 @@ export function Dashboard() {
     allSites: true,
     siteOrigins: [],
   });
-  const [shortcut, setShortcut] = useState("Alt + Shift + D");
+  const shortcut = useShortcut();
   const file = useRef<HTMLInputElement>(null);
   const refresh = useCallback(async () => {
     setWords(await vocabularyClient.list());
@@ -77,11 +79,6 @@ export function Dashboard() {
           data.allSites &&
           (await chrome.permissions.contains({ origins: WEB_ORIGINS })),
       });
-      const commands = await chrome.commands.getAll();
-      setShortcut(
-        commands.find((c) => c.name === "lookup-word")?.shortcut ||
-          tr("Set a shortcut", "단축키를 지정해 주세요"),
-      );
     }
   }, []);
   useEffect(() => {
@@ -290,12 +287,21 @@ export function Dashboard() {
                     "드래그하거나 검색창을 열 필요 없이.",
                   )}{" "}
                   <br />
-                  {tr(
-                    "Point at an English word and press",
-                    "영어 단어에 커서를 두고",
-                  )}{" "}
-                  <kbd>{shortcut}</kbd>
-                  {tr(".", "를 누르세요.")}{" "}
+                  {shortcut ? (
+                    <>
+                      {tr(
+                        "Point at an English word and press",
+                        "영어 단어에 커서를 두고",
+                      )}{" "}
+                      <kbd>{shortcutLabel(shortcut)}</kbd>
+                      {tr(".", "를 누르세요.")}
+                    </>
+                  ) : (
+                    tr(
+                      "Choose your lookup shortcut in Settings.",
+                      "설정에서 조회 단축키를 확인해 주세요.",
+                    )
+                  )}
                 </p>
               </div>
               <div className="onboard-grid">
@@ -404,7 +410,7 @@ export function Dashboard() {
                     <button
                       onClick={() =>
                         void chrome.tabs.create({
-                          url: "chrome://extensions/shortcuts",
+                          url: SHORTCUTS_URL,
                         })
                       }
                     >
@@ -692,36 +698,56 @@ export function Dashboard() {
               )}
               <section className="setting-card">
                 <h2>{tr("Keyboard shortcut", "단축키")}</h2>
-                <div className="setting-line">
-                  <div>
-                    <strong>
-                      {tr(
-                        "Look up the word under the pointer",
-                        "커서 아래 단어 조회",
-                      )}
-                    </strong>
-                    <p>
-                      {tr(
-                        "Change it in Chrome if another extension uses the same shortcut.",
-                        "다른 확장과 겹치면 Chrome에서 변경할 수 있어요.",
-                      )}
-                    </p>
-                  </div>
-                  <kbd>{shortcut}</kbd>
-                </div>
-                {packaged && (
+                <p>
+                  {tr(
+                    "Look up the word under the pointer. Choose a combination that's comfortable for you.",
+                    "커서 아래 단어를 조회합니다. 손에 편한 조합으로 바꿔 보세요.",
+                  )}
+                </p>
+                <label className="shortcut-label" htmlFor="lookup-shortcut">
+                  {tr("Current shortcut", "현재 단축키")}
+                </label>
+                <div className="shortcut-control">
+                  <input
+                    id="lookup-shortcut"
+                    readOnly
+                    value={shortcutLabel(shortcut)}
+                    aria-describedby="shortcut-help"
+                  />
                   <button
+                    disabled={!packaged}
                     onClick={() =>
-                      void chrome.tabs.create({
-                        url: "chrome://extensions/shortcuts",
-                      })
+                      void chrome.tabs.create({ url: SHORTCUTS_URL })
                     }
                   >
-                    {tr(
-                      "Change shortcut in Chrome ↗",
-                      "Chrome에서 단축키 변경 ↗",
-                    )}{" "}
+                    {tr("Change shortcut ↗", "단축키 변경 ↗")}
                   </button>
+                </div>
+                <p id="shortcut-help">
+                  {packaged
+                    ? tr(
+                        "In Chrome, find Glimpse, click the pencil beside its shortcut, then press your new keys. Changes appear here when you return.",
+                        "Chrome에서 Glimpse를 찾고 단축키 옆 연필을 누른 뒤 원하는 키 조합을 누르세요. 돌아오면 변경한 조합이 여기에 표시됩니다.",
+                      )
+                    : tr(
+                        "This demo uses {0}. To choose a different shortcut, open Settings from the installed extension.",
+                        "이 데모는 {0}를 사용합니다. 단축키를 바꾸려면 설치한 확장의 설정을 열어 주세요.",
+                        shortcutLabel(DEFAULT_SHORTCUT),
+                      )}
+                </p>
+                {packaged && (
+                  <p>
+                    {shortcut === ""
+                      ? tr(
+                          "No shortcut is assigned. Another extension may already use the default; choose an available combination.",
+                          "등록된 단축키가 없습니다. 다른 확장이 기본 조합을 사용 중일 수 있으니 사용 가능한 조합을 지정해 주세요.",
+                        )
+                      : tr(
+                          "Default for new installs: {0}. An earlier or custom shortcut may still be assigned.",
+                          "새 설치 기본값: {0}. 기존 설치에서는 이전 단축키나 직접 지정한 조합이 유지될 수 있습니다.",
+                          shortcutLabel(DEFAULT_SHORTCUT),
+                        )}
+                  </p>
                 )}
               </section>
               <section className="setting-card">

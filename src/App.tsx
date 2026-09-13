@@ -1,5 +1,5 @@
 import { t as tr } from "./lib/i18n";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Fragment, lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
   BookOpen,
@@ -15,9 +15,12 @@ import { vocabularyClient } from "./lib/vocabulary-client";
 import { VERSION } from "./lib/product";
 import "./product.css";
 import { LanguageSelect, useLocale } from "./components/LanguageSelect";
+import { useShortcut } from "./components/useShortcut";
+import { shortcutLabel, SHORTCUTS_URL } from "./lib/shortcut";
 const Lab = lazy(() => import("./LabApp"));
 export default function App() {
   useLocale();
+  const shortcut = useShortcut();
   const [lab, setLab] = useState(location.hash === "#lab");
   const [online, setOnline] = useState(false);
   const onlineRef = useRef(online);
@@ -35,8 +38,8 @@ export default function App() {
     const key = (e: KeyboardEvent) => {
       if (
         e.altKey &&
-        e.shiftKey &&
-        e.code === "KeyD" &&
+        !e.shiftKey &&
+        e.code === "KeyQ" &&
         !e.ctrlKey &&
         !e.metaKey &&
         !e.repeat
@@ -134,11 +137,16 @@ export default function App() {
             <MousePointer2 size={23} />
             <span>{tr("Point at a word", "단어에 커서 두기")}</span>
             <div>
-              <kbd>Alt</kbd>
-              <i>+</i>
-              <kbd>Shift</kbd>
-              <i>+</i>
-              <kbd>D</kbd>
+              {shortcut ? (
+                shortcut.split("+").map((key, index) => (
+                  <Fragment key={index}>
+                    {index > 0 && <i>+</i>}
+                    <kbd>{key}</kbd>
+                  </Fragment>
+                ))
+              ) : (
+                <kbd>{shortcutLabel(shortcut)}</kbd>
+              )}
             </div>
             <small>
               {tr(
@@ -146,6 +154,13 @@ export default function App() {
                 "드래그 없이 · 검색창 없이",
               )}
             </small>
+            {packaged && (
+              <button
+                onClick={() => void chrome.tabs.create({ url: SHORTCUTS_URL })}
+              >
+                {tr("Change shortcut ↗", "단축키 변경 ↗")}
+              </button>
+            )}
           </div>
         </section>
         <div className="product-columns">
@@ -166,8 +181,8 @@ export default function App() {
             ))}
             <div className="reader-bottom">
               {tr("Point and press", "단어 위에서")}{" "}
-              <strong>Alt + Shift + D</strong> {tr("· Close with", "· 닫기")}{" "}
-              <strong>Esc</strong>
+              <strong>{shortcutLabel(shortcut)}</strong>{" "}
+              {tr("· Close with", "· 닫기")} <strong>Esc</strong>
               <ArrowUpRight size={17} />
             </div>
           </article>
@@ -246,8 +261,9 @@ export default function App() {
                 </li>
                 <li>
                   {tr(
-                    "Point at a word on any regular webpage and press Alt+Shift+D",
-                    "일반 웹페이지의 단어 위에서 Alt+Shift+D 누르기",
+                    "Point at a word on any regular webpage and press {0}",
+                    "일반 웹페이지의 단어 위에서 {0} 누르기",
+                    shortcutLabel(shortcut),
                   )}
                 </li>
               </ol>

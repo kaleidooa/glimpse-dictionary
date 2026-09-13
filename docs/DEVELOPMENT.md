@@ -8,6 +8,8 @@
 
 The web demo and extension have separate storage. Site permissions work only in the installed extension. Reload both the extension and the page after changing a content script. HTTP/HTTPS access is required at installation. The worker dynamically registers the reader at `document_start`; automatic use defaults to on and respects an explicit off preference and Chrome's permission restrictions.
 
+Alt+Q is the default shortcut. Chrome owns the installed binding; the popup, reader demo and settings read `commands.getAll()`. Settings refreshes it when the page regains focus. Shortcut changes go through `chrome://extensions/shortcuts`; the web demo uses Alt+Q locally.
+
 ## Dictionary
 
 `extension/word-at-point.ts` finds the word under the pointer. Lookup runs in the extension worker through `src/lib/local-lexicon.ts`. A temporary overlay marks the word's text rectangles without wrapping page text or changing the browser selection. It closes with the popup on scroll; lookups wait for 180 ms of scroll stability and ignore late results after closing.

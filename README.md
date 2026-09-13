@@ -2,7 +2,7 @@
 
 [한국어](docs/ko/README.md)
 
-A Chrome extension for looking up English words in Korean. Point at a word and press **Alt+Shift+D**. A faint highlight marks the word while its definition is open. You can save words for later.
+A Chrome extension for looking up English words in Korean. Point at a word and press **Alt+Q**. A faint highlight marks the word while its definition is open. You can save words for later.
 
 The dictionary includes 51,109 headwords and works offline. An optional online English dictionary covers some missing words. The interface supports English (default) and Korean.
 
@@ -11,9 +11,11 @@ The dictionary includes 51,109 headwords and works offline. An optional online E
 1. Download the ZIP from [Releases](https://github.com/kaleidooa/glimpse-dictionary/releases) and unzip it.
 2. Open `chrome://extensions`, enable **Developer mode**, and choose **Load unpacked**.
 3. Select the folder containing `manifest.json`.
-4. Open an English webpage, move the pointer over a word, and press **Alt+Shift+D**. Lookup is ready by default on regular websites.
+4. Open an English webpage, move the pointer over a word, and press **Alt+Q**. Lookup is ready by default on regular websites.
 
-Keep the extracted folder in place. After replacing it with an update, reload the extension and refresh your open webpages. Change the shortcut at `chrome://extensions/shortcuts`.
+Keep the extracted folder in place. After replacing it with an update, reload the extension and refresh your open webpages.
+
+The popup and **Settings → Keyboard shortcut** show your current keys. Click **Change shortcut**, find Glimpse in Chrome, and enter your preferred combination. New installs default to Alt+Q; an existing installation may keep its earlier or custom shortcut. You can also open `chrome://extensions/shortcuts` directly.
 
 This is a beta distributed through GitHub, not the Chrome Web Store. Chrome internal pages, PDF viewers, images, canvas text and editable fields are unsupported.
 

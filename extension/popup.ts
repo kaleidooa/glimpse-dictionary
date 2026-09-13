@@ -5,6 +5,11 @@ import { VERSION, DASHBOARD_PATH } from "../src/lib/product";
 import type { Definition } from "../src/lib/definition-types";
 import { getLocale, subscribeLocale, type Locale } from "../src/lib/i18n";
 import { initializeLocale, setLocale } from "../src/lib/locale-client";
+import {
+  readShortcut,
+  shortcutLabel,
+  SHORTCUTS_URL,
+} from "../src/lib/shortcut";
 await initializeLocale().catch(() => {});
 const byId = <T extends HTMLElement>(id: string) =>
   document.getElementById(id) as T;
@@ -24,6 +29,9 @@ const open = (page: string) => {
 };
 byId("words").onclick = () => open("words");
 byId("settings").onclick = () => open("settings");
+byId("shortcut-change").onclick = () => {
+  void chrome.tabs.create({ url: SHORTCUTS_URL });
+};
 byId("help").onclick = () => open("start");
 byId("privacy").onclick = () => {
   void chrome.tabs.create({
@@ -62,6 +70,9 @@ byId<HTMLSelectElement>("language").onchange = (event) => {
 };
 byId("version").textContent = "v" + VERSION;
 async function refresh() {
+  byId("shortcut").textContent = shortcutLabel(
+    await readShortcut().catch(() => null),
+  );
   const settings = await getSettings();
   const all =
     settings.allSites &&
@@ -272,15 +283,13 @@ run(async () => {
   byId("site").textContent = origin
     ? new URL(tab!.url!).hostname
     : tr("Look up a word", "직접 단어 조회");
-  const commands = await chrome.commands.getAll();
-  const shortcut = commands.find((c) => c.name === "lookup-word")?.shortcut;
-  byId("shortcut").textContent =
-    shortcut || tr("No shortcut set", "단축키 미설정");
+  const shortcut = await readShortcut();
+  byId("shortcut").textContent = shortcutLabel(shortcut);
   if (!shortcut)
     say(
       tr(
-        "No shortcut is assigned. Open Settings to set one in Chrome.",
-        "단축키가 비어 있습니다. 설정에서 Chrome 단축키를 지정해 주세요.",
+        "No shortcut is assigned. Click Change shortcut above to choose one in Chrome.",
+        "단축키가 비어 있습니다. 위의 단축키 변경을 눌러 Chrome에서 지정해 주세요.",
       ),
     );
 });
