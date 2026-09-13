@@ -51,9 +51,9 @@ export function createOverlay(
     const shadow = mount();
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = tr(
-      isWord ? "Look up" : "Translate",
-      isWord ? "뜻 보기" : "번역",
+    button.setAttribute(
+      "aria-label",
+      tr(isWord ? "Look up" : "Translate", isWord ? "뜻 보기" : "번역"),
     );
     button.title = isWord
       ? tr("Look up the selected word", "선택한 단어 뜻 보기")
@@ -61,12 +61,47 @@ export function createOverlay(
           "English → Korean · On-device translation; first use may download a model",
           "영어 → 한국어 · 기기 내 번역 · 처음에는 모델을 내려받을 수 있습니다",
         );
+    // Lucide BookOpen / Languages (ISC); license included in the extension.
+    const svgNS = "http://www.w3.org/2000/svg";
+    const icon = document.createElementNS(svgNS, "svg");
+    for (const [name, value] of Object.entries({
+      viewBox: "0 0 24 24",
+      width: "18",
+      height: "18",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "1.8",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "aria-hidden": "true",
+      focusable: "false",
+    }))
+      icon.setAttribute(name, value);
+    const paths = isWord
+      ? [
+          "M12 7v14",
+          "M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z",
+        ]
+      : [
+          "m5 8 6 6",
+          "m4 14 6-6 2-3",
+          "M2 5h12",
+          "M7 2h1",
+          "m22 22-5-10-5 10",
+          "M14 18h6",
+        ];
+    for (const d of paths) {
+      const path = document.createElementNS(svgNS, "path");
+      path.setAttribute("d", d);
+      icon.append(path);
+    }
+    button.append(icon);
     button.onpointerdown = (event) => event.preventDefault();
     button.onclick = activate;
     shadow.append(button);
     style(
       shadow,
-      ":host{color-scheme:light}button{position:fixed;pointer-events:auto;border:1px solid #c6d2bc;border-radius:7px;padding:5px 9px;background:#fffdf7;color:#3e5b38;box-shadow:0 2px 8px #15302216;font:12px/1.5 system-ui,'Malgun Gothic',sans-serif;cursor:pointer}button:hover{background:#eef3e7}button:focus-visible{outline:2px solid #326a47;outline-offset:2px}",
+      ":host{color-scheme:light}button{position:fixed;pointer-events:auto;display:grid;place-items:center;box-sizing:border-box;width:30px;height:30px;border:1px solid #c6d2bc;border-radius:7px;padding:0;background:#fffdf7;color:#3e5b38;box-shadow:0 2px 8px #15302216;cursor:pointer}svg{display:block;pointer-events:none}button:hover{background:#eef3e7}button:focus-visible{outline:2px solid #326a47;outline-offset:2px}",
     );
     const box = button.getBoundingClientRect();
     button.style.left = `${Math.max(8, Math.min(hit.rect.right - box.width, innerWidth - box.width - 8))}px`;

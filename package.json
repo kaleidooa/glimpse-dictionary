@@ -1,6 +1,6 @@
 {
   "name": "eye-track-dictionary",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "private": true,
   "description": "Local-first English-to-Korean cursor dictionary for Chrome, with an explicit local wordbook.",
   "license": "MIT",

@@ -68,7 +68,9 @@ it("offers a small word button after selection, looks up only on click, and pres
   select();
   await settle();
   const button = roots.at(-1)!.querySelector("button")!;
-  expect(button.textContent).toBe("Look up");
+  expect(button.getAttribute("aria-label")).toBe("Look up");
+  expect(button.textContent).toBe("");
+  expect(button.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   expect(lookup).not.toHaveBeenCalled();
   expect(translate).not.toHaveBeenCalled();
   expect(fetch).not.toHaveBeenCalled();
@@ -89,7 +91,9 @@ it("translates only the selected sentence, renders it as text, and does not offe
   reader = installReader(lookup, save, translate);
   select();
   await settle();
-  expect(roots.at(-1)!.querySelector("button")!.textContent).toBe("Translate");
+  expect(
+    roots.at(-1)!.querySelector("button")!.getAttribute("aria-label"),
+  ).toBe("Translate");
   expect(translate).not.toHaveBeenCalled();
   roots.at(-1)!.querySelector("button")!.click();
   await settle();
@@ -158,7 +162,9 @@ it("cancels a pending translation on reselection and ignores its late result", a
   expect(signal.aborted).toBe(true);
   finish("STALE TRANSLATION");
   await settle();
-  expect(roots.at(-1)!.textContent).toBe("Look up");
+  expect(
+    roots.at(-1)!.querySelector("button")!.getAttribute("aria-label"),
+  ).toBe("Look up");
   window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
   expect(document.querySelector("div[data-glimpse-ui]")).toBeNull();
 });
@@ -184,7 +190,9 @@ it("waits until a scrolling drag ends before offering the action", async () => {
   await settle();
   expect(document.querySelector("div[data-glimpse-ui]")).toBeNull();
   await settle();
-  expect(roots.at(-1)!.querySelector("button")!.textContent).toBe("Look up");
+  expect(
+    roots.at(-1)!.querySelector("button")!.getAttribute("aria-label"),
+  ).toBe("Look up");
 });
 it.each([
   "<p contenteditable>private text</p>",
@@ -213,7 +221,9 @@ it("offers a labeled external fallback only after local translation fails and al
   reader = installReader(vi.fn(), undefined, translate);
   select();
   await settle();
-  expect(roots.at(-1)!.querySelector("button")!.textContent).toBe("번역");
+  expect(
+    roots.at(-1)!.querySelector("button")!.getAttribute("aria-label"),
+  ).toBe("번역");
   roots.at(-1)!.querySelector("button")!.click();
   await settle();
   const link = roots.at(-1)!.querySelector("a")!;
