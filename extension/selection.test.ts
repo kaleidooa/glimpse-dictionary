@@ -110,6 +110,30 @@ it("translates only the selected sentence, renders it as text, and does not offe
   window.dispatchEvent(new Event("scroll"));
   expect(popup.host.isConnected).toBe(false);
 });
+it("keeps the translation open while selecting its text for copying", async () => {
+  document.querySelector("p")!.textContent = "Reading opens new doors.";
+  reader = installReader(
+    vi.fn(),
+    undefined,
+    vi.fn<Translate>().mockResolvedValue("독서는 새로운 문을 엽니다."),
+  );
+  select();
+  await settle();
+  roots.at(-1)!.querySelector("button")!.click();
+  await settle();
+  const popup = roots.at(-1)!;
+  const result = popup.querySelector("p")!;
+  result.dispatchEvent(new MouseEvent("pointerdown", { composed: true }));
+  select(result);
+  await settle();
+  result.dispatchEvent(new MouseEvent("pointerup", { composed: true }));
+  document.dispatchEvent(new Event("selectionchange"));
+  await settle();
+  expect(popup.host.isConnected).toBe(true);
+  expect(popup.textContent).toContain("독서는 새로운 문을 엽니다.");
+  document.body.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+  expect(popup.host.isConnected).toBe(false);
+});
 it("cancels a pending translation on reselection and ignores its late result", async () => {
   document.querySelector("p")!.textContent = "Reading opens new doors.";
   let finish!: (text: string) => void;

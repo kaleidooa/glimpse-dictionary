@@ -14,7 +14,8 @@ export function installReader(
   let point: { x: number; y: number } | null = null,
     scrollTime = -Infinity;
   let selection: SelectedText | null = null,
-    dragging = false;
+    dragging = false,
+    selectingUI = false;
   let selectionTimer: ReturnType<typeof setTimeout> | undefined;
   const ownUI = (event: Event) =>
     event
@@ -26,6 +27,7 @@ export function installReader(
   const clearSelection = () => {
     clearTimeout(selectionTimer);
     selection = null;
+    selectingUI = false;
     overlay.close();
   };
   const move = (event: PointerEvent) => {
@@ -42,6 +44,7 @@ export function installReader(
   };
   const blur = () => {
     dragging = false;
+    selectingUI = false;
     point = null;
     clearSelection();
   };
@@ -89,14 +92,18 @@ export function installReader(
   };
   const scheduleSelection = () => {
     clearTimeout(selectionTimer);
-    if (!dragging)
+    if (!dragging && !selectingUI)
       selectionTimer = setTimeout(
         refreshSelection,
         Math.max(90, 185 - (performance.now() - scrollTime)),
       );
   };
   const down = (event: PointerEvent) => {
-    if (ownUI(event)) return;
+    selectingUI = ownUI(event);
+    if (selectingUI) {
+      clearTimeout(selectionTimer);
+      return;
+    }
     dragging = true;
     clearSelection();
   };
@@ -105,10 +112,12 @@ export function installReader(
     if (!ownUI(event)) scheduleSelection();
   };
   const escape = (event: KeyboardEvent) => {
+    if (!ownUI(event)) selectingUI = false;
     if (event.key === "Escape") clearSelection();
   };
   const cancelDrag = () => {
     dragging = false;
+    selectingUI = false;
     clearSelection();
   };
   window.addEventListener("pointerdown", down, true);
