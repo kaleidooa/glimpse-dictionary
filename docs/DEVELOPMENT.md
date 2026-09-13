@@ -14,6 +14,8 @@ Alt+Q is the default shortcut. Chrome owns the installed binding; the popup, rea
 
 `extension/word-at-point.ts` finds the word under the pointer. Lookup runs in the extension worker through `src/lib/local-lexicon.ts`. A temporary overlay marks the word's text rectangles without wrapping page text or changing the browser selection. It closes with the popup on scroll; lookups wait for 180 ms of scroll stability and ignore late results after closing.
 
+Text selection offers a small button after the drag ends. Selected words use the same dictionary; sentences use Chrome's Translator API directly from the button's user activation. Selection reads are bounded to 2,000 characters and exclude editable areas. Chrome 138+ on desktop supports the API, but insecure pages and frame permissions can prevent access. A model may download on first use. Translation instances are destroyed after use and canceled on close; there is no translation cache or automatic online fallback. The optional Google Translate link sends the selection in its URL only when clicked.
+
 | Data | Headwords | Senses | License |
 | --- | ---: | ---: | --- |
 | Korean Wiktionary, via Kaikki | 13,649 | 19,747 | CC BY-SA 4.0 |

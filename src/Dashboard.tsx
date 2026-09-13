@@ -355,8 +355,8 @@ export function Dashboard() {
                         </strong>
                         <p>
                           {tr(
-                            "Click “Save word” to keep a definition. Press Esc or scroll to close it.",
-                            "뜻에서 ‘단어장에 저장’을 누르면 나중에 다시 볼 수 있어요. Esc나 스크롤로 닫습니다.",
+                            "Or select text and click the small button: Look up for a word, Translate for a sentence. Esc or scrolling closes the result.",
+                            "드래그 후 작은 버튼을 눌러도 됩니다. 단어는 뜻 보기, 문장은 번역을 제공합니다. Esc나 스크롤로 닫습니다.",
                           )}{" "}
                         </p>
                       </div>
@@ -891,6 +891,21 @@ export function Dashboard() {
                     </p>
                   )}
                 </div>
+              </section>
+              <section className="setting-card">
+                <h2>{tr("Sentence translation", "문장 번역")}</h2>
+                <p>
+                  {tr(
+                    "Select an English sentence and click Translate. Supported desktop Chrome pages translate to Korean on your device; first use may download a model. Up to 2,000 characters, with no translation history saved.",
+                    "영어 문장을 드래그하고 번역을 누르세요. 지원하는 데스크톱 Chrome 페이지에서는 기기 안에서 한국어로 번역합니다. 처음에는 모델을 내려받을 수 있습니다. 최대 2,000자를 번역하며 번역 기록은 저장하지 않습니다.",
+                  )}
+                </p>
+                <p>
+                  {tr(
+                    "If local translation is unavailable, an optional Google Translate link opens a new tab and sends only your selection when clicked.",
+                    "기기 내 번역을 사용할 수 없으면 Google 번역 링크를 제공합니다. 직접 눌렀을 때만 선택한 글을 전송하고 새 탭을 엽니다.",
+                  )}
+                </p>
               </section>
               <section className="setting-card lab-setting">
                 <div>

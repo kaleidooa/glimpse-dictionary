@@ -6,6 +6,8 @@ A Chrome extension for looking up English words in Korean. Point at a word and p
 
 The dictionary includes 51,109 headwords and works offline. An optional online English dictionary covers some missing words. The interface supports English (default) and Korean.
 
+You can also select text and click the small button: **Look up** shows a word's definition; **Translate** translates an English sentence into Korean. Sentence translation uses Chrome's on-device model on supported desktop pages. First use may download a model. Selections are limited to 2,000 characters and are not saved. If local translation is unavailable, an optional link sends the selection to Google Translate in a new tab when clicked.
+
 ## Install
 
 1. Download the ZIP from [Releases](https://github.com/kaleidooa/glimpse-dictionary/releases) and unzip it.

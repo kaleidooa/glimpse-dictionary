@@ -1,12 +1,12 @@
 # Privacy
 
-[한국어](docs/ko/PRIVACY.md) · Updated September 12, 2026
+[한국어](docs/ko/PRIVACY.md) · Updated September 13, 2026
 
 Glimpse has no accounts, analytics, ads or backend service. The project is maintained at [kaleidooa/glimpse-dictionary](https://github.com/kaleidooa/glimpse-dictionary).
 
 ## Dictionary and wordbook
 
-On an authorized page, Glimpse keeps the latest pointer position in memory and reads nearby text when you press the shortcut. It does not store pointer paths, lookup history, page content or visited URLs. Input fields and editable areas are excluded.
+On an authorized page, Glimpse keeps the latest pointer position in memory and reads nearby text when you press the shortcut. Selecting text lets Glimpse read that selection to display a small action button; lookup starts only when clicked. It does not store pointer paths, lookup history, page content or visited URLs. Input fields and editable areas are excluded.
 
 The bundled dictionary is read from local files. Clicking **Save word** stores that word, lemma, up to three senses, parts of speech, source links, license, save time and learning status in `chrome.storage.local`. The limit is 1,000 words or about 4 MB. Sentences, page URLs and camera data are not part of the wordbook.
 
@@ -18,11 +18,17 @@ Online lookup is off by default. If enabled and Chrome permits access, missing E
 
 The connection check sends the fixed word `serendipity`. Saving an online-only word may repeat its lookup. Turning the option off stops further online queries.
 
+## Sentence translation
+
+Clicking **Translate** processes the selected English text, up to 2,000 characters, with Chrome's on-device Translator API. Chrome may download a language model on first use. Glimpse does not send that text to a translation server or save the selection or result. Closing the result cancels pending translation. Availability depends on the browser and the page's permissions.
+
+If local translation fails, **Send to Google Translate** is an optional external link. Clicking it sends the selection to Google in a new tab. The text is included in the URL and may remain in browser history. Google also receives normal website visit information and handles the text under its own policies. Glimpse never opens this link automatically.
+
 ## Preferences and permissions
 
 Interface language, online lookup and allowed-site preferences stay on the device. The default interface language is English.
 
-The extension requests access to HTTP/HTTPS websites at installation. Automatic use is on by default, so each page is ready for the first shortcut. Page listeners keep only the latest pointer position; they do not scan the page or look up words until you ask. `activeTab` and `scripting` also support activation from the extension popup.
+The extension requests access to HTTP/HTTPS websites at installation. Automatic use is on by default, so each page is ready for the first shortcut or text selection. Page listeners keep the latest pointer position and temporarily hold the selection in memory. They do not scan the page or look up words automatically. `activeTab` and `scripting` also support activation from the extension popup.
 
 Turning off automatic use on all sites stops active readers and clears the individual site list. You can then enable individual sites from the popup. Saved words and the online dictionary setting remain unchanged. This switch does not revoke Chrome's host permissions; manage those in Chrome's extension settings.
 

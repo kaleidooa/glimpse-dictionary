@@ -80,6 +80,9 @@ h1 {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.selection-tip {
+  margin: -12px 0 18px;
+}
 kbd {
   border: 1px solid #bacbad;
   border-bottom-width: 3px;

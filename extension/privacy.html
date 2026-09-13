@@ -46,7 +46,7 @@
     </header>
     <main>
       <h1>Privacy</h1>
-      <p><a href="privacy.ko.html">한국어</a> · Updated September 12, 2026</p>
+      <p><a href="privacy.ko.html">한국어</a> · Updated September 13, 2026</p>
       <p>
         Glimpse has no accounts, analytics, ads or backend service. The project
         is maintained at
@@ -60,9 +60,11 @@
       <h2>Dictionary and wordbook</h2>
       <p>
         On an authorized page, Glimpse keeps the latest pointer position in
-        memory and reads nearby text when you press the shortcut. It does not
-        store pointer paths, lookup history, page content or visited URLs. Input
-        fields and editable areas are excluded.
+        memory and reads nearby text when you press the shortcut. Selecting text
+        lets Glimpse read that selection to display a small action button;
+        lookup starts only when clicked. It does not store pointer paths, lookup
+        history, page content or visited URLs. Input fields and editable areas
+        are excluded.
       </p>
       <p>
         The bundled dictionary is read from local files. Clicking
@@ -97,6 +99,23 @@
         Saving an online-only word may repeat its lookup. Turning the option off
         stops further online queries.
       </p>
+      <h2>Sentence translation</h2>
+      <p>
+        Clicking <strong>Translate</strong> processes the selected English text,
+        up to 2,000 characters, with Chrome's on-device Translator API. Chrome
+        may download a language model on first use. Glimpse does not send that
+        text to a translation server or save the selection or result. Closing
+        the result cancels pending translation. Availability depends on the
+        browser and the page's permissions.
+      </p>
+      <p>
+        If local translation fails, <strong>Send to Google Translate</strong> is
+        an optional external link. Clicking it sends the selection to Google in
+        a new tab. The text is included in the URL and may remain in browser
+        history. Google also receives normal website visit information and
+        handles the text under its own policies. Glimpse never opens this link
+        automatically.
+      </p>
       <h2>Preferences and permissions</h2>
       <p>
         Interface language, online lookup and allowed-site preferences stay on
@@ -105,10 +124,10 @@
       <p>
         The extension requests access to HTTP/HTTPS websites at installation.
         Automatic use is on by default, so each page is ready for the first
-        shortcut. Page listeners keep only the latest pointer position; they do
-        not scan the page or look up words until you ask.
-        <code>activeTab</code> and <code>scripting</code> also support
-        activation from the extension popup.
+        shortcut or text selection. Page listeners keep the latest pointer
+        position and temporarily hold the selection in memory. They do not scan
+        the page or look up words automatically. <code>activeTab</code> and
+        <code>scripting</code> also support activation from the extension popup.
       </p>
       <p>
         Turning off automatic use on all sites stops active readers and clears

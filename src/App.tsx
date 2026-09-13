@@ -131,6 +131,10 @@ export default function App() {
                 "The definition appears beside the word.",
                 "뜻은 단어 옆에, 읽는 흐름은 그대로.",
               )}{" "}
+              {tr(
+                "You can also select a word or sentence and click the small button.",
+                "단어나 문장을 드래그한 뒤 작은 버튼을 눌러도 됩니다.",
+              )}
             </p>
           </div>
           <div className="shortcut-card">

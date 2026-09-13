@@ -2,21 +2,24 @@ import { definitionLabel } from "../src/lib/definition-labels";
 import { t as tr } from "../src/lib/i18n";
 import type { Definition } from "../src/lib/definitions";
 import type { Hit } from "./word-at-point";
-import { subscribeLocale } from "../src/lib/i18n";
+import { getLocale, subscribeLocale } from "../src/lib/i18n";
+import { googleTranslationURL, type Translate } from "./translation";
 
 export function createOverlay(
   save?: (definition: Definition) => Promise<{ created: boolean }>,
 ) {
   let host: HTMLDivElement | null = null,
     revision = 0;
+  let cancel: (() => void) | undefined;
   const close = () => {
     revision++;
+    const stop = cancel;
+    cancel = undefined;
+    stop?.();
     host?.remove();
     host = null;
   };
-  const show = (hit: Hit | null, message?: string) => {
-    close();
-    const token = revision;
+  const mount = () => {
     host = document.createElement("div");
     host.dataset.glimpseUi = "";
     for (const [name, value] of Object.entries({
@@ -29,6 +32,60 @@ export function createOverlay(
     }))
       host.style.setProperty(name, value, "important");
     const shadow = host.attachShadow({ mode: "closed" });
+    document.documentElement.append(host);
+    return shadow;
+  };
+  const style = (shadow: ShadowRoot, text: string) => {
+    if (typeof CSSStyleSheet.prototype.replaceSync === "function") {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(text);
+      shadow.adoptedStyleSheets = [sheet];
+    } else {
+      const css = document.createElement("style");
+      css.textContent = text;
+      shadow.prepend(css);
+    }
+  };
+  const offer = (hit: Hit, isWord: boolean, activate: () => void) => {
+    close();
+    const shadow = mount();
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = tr(
+      isWord ? "Look up" : "Translate",
+      isWord ? "뜻 보기" : "번역",
+    );
+    button.title = isWord
+      ? tr("Look up the selected word", "선택한 단어 뜻 보기")
+      : tr(
+          "English → Korean · On-device translation; first use may download a model",
+          "영어 → 한국어 · 기기 내 번역 · 처음에는 모델을 내려받을 수 있습니다",
+        );
+    button.onpointerdown = (event) => event.preventDefault();
+    button.onclick = activate;
+    shadow.append(button);
+    style(
+      shadow,
+      ":host{color-scheme:light}button{position:fixed;pointer-events:auto;border:1px solid #c6d2bc;border-radius:7px;padding:5px 9px;background:#fffdf7;color:#3e5b38;box-shadow:0 2px 8px #15302216;font:12px/1.5 system-ui,'Malgun Gothic',sans-serif;cursor:pointer}button:hover{background:#eef3e7}button:focus-visible{outline:2px solid #326a47;outline-offset:2px}",
+    );
+    const box = button.getBoundingClientRect();
+    button.style.left = `${Math.max(8, Math.min(hit.rect.right - box.width, innerWidth - box.width - 8))}px`;
+    button.style.top = `${Math.max(8, hit.rect.bottom + box.height + 12 < innerHeight ? hit.rect.bottom + 5 : hit.rect.top - box.height - 5)}px`;
+  };
+  const show = (
+    hit: Hit | null,
+    message?: string,
+    options: {
+      title?: string;
+      translation?: boolean;
+      cancel?: () => void;
+      footer?: HTMLElement;
+    } = {},
+  ) => {
+    close();
+    const token = revision;
+    cancel = options.cancel;
+    const shadow = mount();
     const markers = document.createElement("div");
     markers.setAttribute("aria-hidden", "true");
     for (const rect of hit?.rects ?? []) {
@@ -51,17 +108,24 @@ export function createOverlay(
       ".card{font-size:15px}.lemma,.pos,small,.more{font-size:12px;color:#52634b}.save{font:13px/1.5 system-ui;border:1px solid #b8c7ab;border-radius:7px;padding:7px 10px;color:#304d31;background:#f0f5e9;margin:12px 0 0}.save:disabled{cursor:default;opacity:.7}.save-note{font-size:12px;color:#52634b;margin:6px 0 0}.save-note:empty{display:none}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}";
     css.textContent +=
       ".word-marker{position:fixed;pointer-events:none;background:rgba(112,148,99,.12);border-bottom:1px solid rgba(92,128,79,.48);border-radius:3px;box-sizing:border-box}@media(forced-colors:active){.word-marker{background:transparent;border-bottom-color:Highlight}}";
-    card.className = "card";
+    card.className = options.translation ? "card translation" : "card";
+    css.textContent +=
+      ".translation .word{font:600 18px/1.5 system-ui}.translation p{white-space:pre-wrap}.translation .retry{font:13px/1.5 system-ui;border:1px solid #b8c7ab;border-radius:7px;padding:6px 10px;margin-top:12px}.translation .retry[hidden]{display:none}";
     card.setAttribute("role", "status");
     card.setAttribute("aria-live", "polite");
     const title = document.createElement("div");
     title.className = "title";
     const word = document.createElement("strong");
     word.className = "word";
-    word.textContent = hit?.word ?? "glimpse.";
+    word.textContent = options.title ?? hit?.word ?? "glimpse.";
     const dismiss = document.createElement("button");
     dismiss.textContent = "×";
-    dismiss.setAttribute("aria-label", tr("Close definition", "뜻 닫기"));
+    dismiss.setAttribute(
+      "aria-label",
+      options.translation
+        ? tr("Close translation", "번역 닫기")
+        : tr("Close definition", "뜻 닫기"),
+    );
     dismiss.onclick = close;
     const meaning = document.createElement("p");
     meaning.textContent =
@@ -74,13 +138,9 @@ export function createOverlay(
     source.textContent = tr("GLIMPSE · ESC to close", "GLIMPSE · ESC로 닫기");
     title.append(word, dismiss);
     card.append(title, lemma, meaning, senses, source);
-    if (typeof CSSStyleSheet.prototype.replaceSync === "function") {
-      const sheet = new CSSStyleSheet();
-      sheet.replaceSync(css.textContent);
-      shadow.adoptedStyleSheets = [sheet];
-      shadow.append(markers, card);
-    } else shadow.append(css, markers, card);
-    document.documentElement.append(host);
+    if (options.footer) card.append(options.footer);
+    shadow.append(markers, card);
+    style(shadow, css.textContent);
     const position = () => {
       const rect = card.getBoundingClientRect();
       card.style.left = `${Math.max(12, Math.min(hit?.rect.left ?? innerWidth - rect.width - 24, innerWidth - rect.width - 12))}px`;
@@ -134,6 +194,7 @@ export function createOverlay(
         .filter(Boolean)
         .join("  ");
       meaning.textContent = definition.senses?.length ? "" : definition.meaning;
+      if (options.translation) meaning.lang = definition.language;
       const renderSenses = (expanded: boolean) => {
         senses.replaceChildren();
         for (const item of (definition.senses ?? []).slice(
@@ -186,7 +247,9 @@ export function createOverlay(
         if (
           /^https:\/\/(ko\.wiktionary\.org|github\.com|dictionaryapi\.dev)\//.test(
             item.url,
-          )
+          ) ||
+          (options.translation &&
+            item.url.startsWith("https://translate.google.com/?"))
         ) {
           const link = document.createElement("a");
           link.href = item.url;
@@ -195,7 +258,7 @@ export function createOverlay(
           link.rel = "noreferrer noopener";
           source.append(" · ", link);
         }
-      if (save && definition.status === "found") {
+      if (!options.translation && save && definition.status === "found") {
         const button = document.createElement("button");
         button.className = "save";
         button.textContent = tr("Save word", "단어장에 저장");
@@ -236,6 +299,69 @@ export function createOverlay(
       position();
     };
   };
+  const translate = (hit: Hit, text: string, request: Translate) => {
+    const controller = new AbortController();
+    const retry = document.createElement("button");
+    retry.className = "retry";
+    retry.hidden = true;
+    retry.textContent = tr(
+      "Retry on-device translation",
+      "기기 내 번역 다시 시도",
+    );
+    retry.onclick = () => translate(hit, text, request);
+    const update = show(hit, undefined, {
+      title: tr("English → Korean", "영어 → 한국어"),
+      translation: true,
+      cancel: () => controller.abort(),
+      footer: retry,
+    });
+    const display = (meaning: string, translated = false) =>
+      update({
+        word: text,
+        meaning,
+        language: translated ? "ko" : getLocale(),
+        source: tr(
+          "Chrome · On-device translation · Text stays on your device",
+          "Chrome · 기기 내 번역 · 선택한 글은 외부로 보내지 않습니다",
+        ),
+      });
+    display(
+      tr(
+        "Preparing translation… First use may download a language model.",
+        "번역 준비 중… 처음에는 언어 모델을 내려받을 수 있습니다.",
+      ),
+    );
+    void request(text, { signal: controller.signal, progress: display })
+      .then((text) => display(text, true))
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        update({
+          word: text,
+          language: getLocale(),
+          meaning:
+            error instanceof Error
+              ? error.message
+              : tr(
+                  "Translation failed. Please retry.",
+                  "번역하지 못했습니다. 다시 시도해 주세요.",
+                ),
+          source: tr(
+            "Optional: the link below sends the selected text to Google Translate and opens a new tab.",
+            "선택 사항: 아래 링크를 누르면 선택한 글을 Google 번역에 보내고 새 탭을 엽니다.",
+          ),
+          sourceLinks: [
+            {
+              label: tr(
+                "Send to Google Translate ↗",
+                "Google 번역으로 보내기 ↗",
+              ),
+              url: googleTranslationURL(text),
+            },
+          ],
+        });
+        retry.hidden = false;
+      });
+  };
   const outside = (e: PointerEvent) => {
     if (host && !e.composedPath().includes(host)) close();
   };
@@ -244,19 +370,24 @@ export function createOverlay(
   };
   window.addEventListener("pointerdown", outside, true);
   window.addEventListener("keydown", escape, true);
-  window.addEventListener("scroll", close, true);
+  const scroll = (event: Event) => {
+    if (!host || !event.composedPath().includes(host)) close();
+  };
+  window.addEventListener("scroll", scroll, true);
   window.addEventListener("resize", close);
   window.addEventListener("blur", close);
   const unsubscribeLocale = subscribeLocale(close);
   return {
     close,
     show,
+    offer,
+    translate,
     dispose() {
       unsubscribeLocale();
       close();
       window.removeEventListener("pointerdown", outside, true);
       window.removeEventListener("keydown", escape, true);
-      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("scroll", scroll, true);
       window.removeEventListener("resize", close);
       window.removeEventListener("blur", close);
     },
